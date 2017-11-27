@@ -1,0 +1,115 @@
+/********************************************************************
+ * FileName:		History.txt 									*
+ * Dependencies:													*
+ * Processor:		PIC32MX564F128H									*
+ * Company:			Ingenia Projet 64 S.L.							*
+ *																	*
+ ********************************************************************
+ * File Description:												*
+ *																	*
+ *	- Software del equipo Mesotreat de Rös's.						*
+ *																	*
+ * Change History:			Versión 0.0								*
+ *																	*
+ * Name				Date            Changes							*
+ * -----			-----			--------						*
+ * J. Tejedor		07/09/16		Versión inicial	.				*
+ *																	*
+ * J. Tejedor		06/10/16		Se inicia le proceso de añadir	*
+ *									comunicación USB con dispositivo*
+ *									android.						*
+ *																	*
+ * J. Tejedor		10/10/16		Se inicia la comunicación con	*
+ *									AD9833.							*
+ *																	*
+ * J. Tejedor		11/10/16		Sale frecuencia 1MHz.			*
+ *																	*
+ * J. Tejedor		18/10/16		La comunicación con AD9833 no	*
+ *									acababa de funcionar. Poniendo	*
+ *									un condensador de 100 pF en la	*
+ *									señal de reloj se soluciona.	*
+ *																	*
+ * J. Tejedor		25/10/16		Se van implementando órdenes. Se*
+ *									genera el documento explicativo *
+ *									del protocolo de comunicación.	*
+ *																	*
+ * J. Tejedor		07/12/16		Se hace funcionar correctamente	*
+ *									el AD9834.						*
+ *																	*
+ * J. Tejedor		13/12/16		Se corrige la comunicación con	*
+ *									el AD9834, esperando que acabe	*
+ *									la transmisión para deshabilitar*
+ *									el chip.						*
+ *																	*
+ * J. Tejedor		13/02/17		Se modifica la trama status. Se	*
+ *									da un tiempo para acabar envío 	*
+ *									de trama antes hacer reset.		*
+ *																	*
+ * J. Tejedor		28/02/17		Llegan los protos.				*
+ *																	*
+ *																	*
+ *********************		Versión 0.0.2		*********************
+ *																	*
+ * J. Tejedor		07/03/17		Parece que se arregla la 		*
+ *									reconexión de la INTAB.			*
+ *																	*
+ *	MIRAR "Historic versions revisions PJT0028.xlsx"
+ *																	*
+ ********************************************************************/
+ 
+COSAS MAL PROTO
+ 28.2.17
+- Los transformadores L2, L3 y L4 tienen los pads de salida al revés.
+- D23 (LEDRUN) montado al revés.
+- R122 pasa a 390 ohms (antes de 100 ohms) para que pin del micro no tire 33 mA. Ahora tirara casi 9 mA.
+
+ 1.3.17
+- D35 (led hub state) montado al revés.
+- R191 pasa a 220 ohms (antes 1k), para que led hub state luzca bien (antes pasaban 3,3mA), ahora tira 15 mA
+- R189 a 100k, C190 a 100nF.
+- Falta dibujar pin 37 (GND) en esquema integrado U3 (HUB).
+- Los pines 22, 24 y 25 de U3 deben ir con una resistencia de 100k a masa (estan n.c.).
+- El XTal Y2 está montado de 20 MHZ y debería ser de 24 MHZ (Por eso no iba creo)
+- Las ferritas en paralelo de 1A para hacer 2A estan en el puerto equivocado del HUB, deberían ir en CN12 y no en CN11.
+- LA tensión de +5VTAB no debe ir conectada a la puerto de UPSTREAM INTAB (la alimentacion la proporciona la INTAB).
+- Los pines de control de los TPIC están conectados a alimentación y no a masa. (pin 8 de IC23 e IC37).
+
+ 2.3.17
+- ON+5 no se puede controlar??? Está unida la salida del tpic al pin 63 del micro (E).
+- Los topos de las salidas unconected no estan hechos.
+- Los conectrors de salida muy pegados a los reles.
+- pin 5 y 6 de IC 12 e IC13 intercambiados (operacionles de stim pulsos negativos)
+- Footprint de integfrados IC26 e IC28 incorrecto
+
+-Suena fatal pito?
+
+ 4.3.17
+- SAlidas aplicadores gfalva lecturea, led...
+- 7805 Se calienta
+- REsoldar resistencias de 1W de estimulación
+- resto de la rf q falta y/o se modifique
+
+
+Electrolifting sale por el canal 3
+Electrostimulación sale por el 1 y el 2.
+Como teóricamente sólo va un tratamiento o el otro, paro los canales tres al parar un tratamiento. 
+
+6.3.17 se entrega un proto
+14.3.17 se entrega un proto con rf y se recoge el anterior. El 7805 gasta unos 170mA como mucho, se pone a 65 grados aprox. (La entrada está a 12.8V)
+
+v0.0.4 La galvanica ya sale bipolar y detección de mangos con nuevas resistencias.
+
+18.4.17 Para hacer la galvánica igual que la del Mesobiolift (4mA max), se deben poner las resistencias R17 y R26 a 120 ohms (antes de 220 ohms).
+19.4.17 Se especifican las señales de estimulación
+21.4.17 Voy a ros a tomar los valores reales de un tei de las señales
+
+8.6.17 	Galvánica solo polaridad posistiva.					
+		Bajo nivel deteccion de galvanica para RF.		V0.1.0
+		Pasos de salida de 5 en 5.
+
+9.6.17	RAMP_OFF no funciona bien, esta siempre haceindo rampa porque está conectado a tpic.
+		Se pone rampoff a 1;
+		
+12.6.17	v1.1 cambio potencia rf y valor de dac ref RF
+
+26.7.17 Prototipo montado
