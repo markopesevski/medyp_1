@@ -1,0 +1,367 @@
+
+**** 11/30/17 11:40:27 *********** Evaluation PSpice (Nov 1999) **************
+
+ * C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171130\pspice\Schematic1.sch
+
+
+ ****     CIRCUIT DESCRIPTION
+
+
+******************************************************************************
+
+
+
+
+* Schematics Version 9.1 - Web Update 1
+* Thu Nov 30 11:40:26 2017
+
+
+
+** Analysis setup **
+.tran 0ns 10ms 0 1ms SKIPBP
+
+
+* From [PSPICE NETLIST] section of pspiceev.ini:
+.lib "nom.lib"
+
+.INC "Schematic1.net"
+
+**** INCLUDING Schematic1.net ****
+* Schematics Netlist *
+
+
+
+R_R9         0 $N_0001  10k  
+R_R1         $N_0003 $N_0002  1k  
+X_U1         $N_0001 $N_0011 0 
++ $N_0002 $N_0004 $N_0005 $N_0006 $N_0007 $N_0008 $N_0009 $N_0010 $G_DPWR
++  $G_DGND DAC8break 
++PARAMS: MNTYMXDLY=0 IO_LEVEL=0
+V_V2         $N_0011 0 1.5
+R_R4         $N_0003 $N_0006  1k  
+R_R5         $N_0003 $N_0007  1k  
+R_R7         $N_0003 $N_0008  1k  
+R_R6         $N_0003 $N_0009  1k  
+R_R8         $N_0003 $N_0010  1k  
+V_V1         $N_0003 0 3
+R_R2         $N_0003 $N_0004  1k  
+R_R3         $N_0003 $N_0005  1k  
+
+**** RESUMING Schematic1.cir ****
+.INC "Schematic1.als"
+
+
+
+**** INCLUDING Schematic1.als ****
+* Schematics Aliases *
+
+.ALIASES
+R_R9            R9(1=0 2=$N_0001 )
+R_R1            R1(1=$N_0003 2=$N_0002 )
+X_U1            U1(OUT=$N_0001 REF=$N_0011 GND=0 DB7=$N_0002 DB6=$N_0004
++  DB5=$N_0005 DB4=$N_0006 DB3=$N_0007 DB2=$N_0008 DB1=$N_0009 DB0=$N_0010
++  DPWR=$G_DPWR DGND=$G_DGND )
+V_V2            V2(+=$N_0011 -=0 )
+R_R4            R4(1=$N_0003 2=$N_0006 )
+R_R5            R5(1=$N_0003 2=$N_0007 )
+R_R7            R7(1=$N_0003 2=$N_0008 )
+R_R6            R6(1=$N_0003 2=$N_0009 )
+R_R8            R8(1=$N_0003 2=$N_0010 )
+V_V1            V1(+=$N_0003 -=0 )
+R_R2            R2(1=$N_0003 2=$N_0004 )
+R_R3            R3(1=$N_0003 2=$N_0005 )
+_    _($G_DPWR=$G_DPWR)
+_    _($G_DGND=$G_DGND)
+.ENDALIASES
+
+
+**** RESUMING Schematic1.cir ****
+.probe
+
+
+.END
+
+
+**** Generated AtoD and DtoA Interfaces ****
+
+*
+* Analog/Digital interface for node $N_0002
+*
+* Moving X_U1.U1:DATA1 from analog node $N_0002 to new digital node $N_0002$AtoD
+X$$N_0002_AtoD1
++ $N_0002
++ $N_0002$AtoD
++ $G_DPWR
++ $G_DGND
++ AtoD_STD
++       PARAMS: CAPACITANCE=   0     
+*
+* Analog/Digital interface for node $N_0006
+*
+* Moving X_U1.U1:DATA4 from analog node $N_0006 to new digital node $N_0006$AtoD
+X$$N_0006_AtoD1
++ $N_0006
++ $N_0006$AtoD
++ $G_DPWR
++ $G_DGND
++ AtoD_STD
++       PARAMS: CAPACITANCE=   0     
+*
+* Analog/Digital interface for node $N_0007
+*
+* Moving X_U1.U1:DATA5 from analog node $N_0007 to new digital node $N_0007$AtoD
+X$$N_0007_AtoD1
++ $N_0007
++ $N_0007$AtoD
++ $G_DPWR
++ $G_DGND
++ AtoD_STD
++       PARAMS: CAPACITANCE=   0     
+*
+* Analog/Digital interface for node $N_0008
+*
+* Moving X_U1.U1:DATA6 from analog node $N_0008 to new digital node $N_0008$AtoD
+X$$N_0008_AtoD1
++ $N_0008
++ $N_0008$AtoD
++ $G_DPWR
++ $G_DGND
++ AtoD_STD
++       PARAMS: CAPACITANCE=   0     
+*
+* Analog/Digital interface for node $N_0009
+*
+* Moving X_U1.U1:DATA7 from analog node $N_0009 to new digital node $N_0009$AtoD
+X$$N_0009_AtoD1
++ $N_0009
++ $N_0009$AtoD
++ $G_DPWR
++ $G_DGND
++ AtoD_STD
++       PARAMS: CAPACITANCE=   0     
+*
+* Analog/Digital interface for node $N_0010
+*
+* Moving X_U1.U1:DATA8 from analog node $N_0010 to new digital node $N_0010$AtoD
+X$$N_0010_AtoD1
++ $N_0010
++ $N_0010$AtoD
++ $G_DPWR
++ $G_DGND
++ AtoD_STD
++       PARAMS: CAPACITANCE=   0     
+*
+* Analog/Digital interface for node $N_0004
+*
+* Moving X_U1.U1:DATA2 from analog node $N_0004 to new digital node $N_0004$AtoD
+X$$N_0004_AtoD1
++ $N_0004
++ $N_0004$AtoD
++ $G_DPWR
++ $G_DGND
++ AtoD_STD
++       PARAMS: CAPACITANCE=   0     
+*
+* Analog/Digital interface for node $N_0005
+*
+* Moving X_U1.U1:DATA3 from analog node $N_0005 to new digital node $N_0005$AtoD
+X$$N_0005_AtoD1
++ $N_0005
++ $N_0005$AtoD
++ $G_DPWR
++ $G_DGND
++ AtoD_STD
++       PARAMS: CAPACITANCE=   0     
+*
+* Analog/Digital interface power supply subcircuits
+*
+
+X$DIGIFPWR 0 DIGIFPWR
+
+**** 11/30/17 11:40:27 *********** Evaluation PSpice (Nov 1999) **************
+
+ * C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171130\pspice\Schematic1.sch
+
+
+ ****     Diode MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               D74CLMP         D74             
+          IS    1.000000E-15  100.000000E-18 
+          RS    2              25            
+         CJO    2.000000E-12    2.000000E-12 
+
+
+**** 11/30/17 11:40:27 *********** Evaluation PSpice (Nov 1999) **************
+
+ * C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171130\pspice\Schematic1.sch
+
+
+ ****     BJT MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               Q74             
+               NPN             
+          IS  100.000000E-18 
+          BF   49            
+          NF    1            
+         ISE  100.000000E-18 
+          BR     .03         
+          NR    1            
+         ISC  400.000000E-18 
+          RB   50            
+          RC   20            
+         CJE    1.000000E-12 
+         VJE     .9          
+         MJE     .5          
+         CJC  500.000000E-15 
+         VJC     .8          
+         CJS    3.000000E-12 
+         VJS     .7          
+         MJS     .33         
+          TF  200.000000E-12 
+          TR   10.000000E-09 
+          CN    2.42         
+           D     .87         
+
+
+**** 11/30/17 11:40:27 *********** Evaluation PSpice (Nov 1999) **************
+
+ * C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171130\pspice\Schematic1.sch
+
+
+ ****     Digital Input MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               (Dummy Digital Input Model) 
+        FILE DSO_DTOA        
+      FORMAT    6            
+    TIMESTEP  100.000000E-12 
+      S0NAME 0               
+       S0TSW   10.000000E-09 
+       S0RLO  100            
+       S0RHI  100            
+      S1NAME 1               
+       S1TSW   10.000000E-09 
+       S1RLO  100            
+       S1RHI  100            
+
+
+**** 11/30/17 11:40:27 *********** Evaluation PSpice (Nov 1999) **************
+
+ * C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171130\pspice\Schematic1.sch
+
+
+ ****     Digital Output MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               DO74            
+        FILE DSO_ATOD        
+      FORMAT    6            
+     CHGONLY    1            
+    TIMESTEP  100.000000E-12 
+      S0NAME X               
+       S0VHI    2            
+       S0VLO     .8          
+      S1NAME 0               
+       S1VHI     .8          
+       S1VLO   -1.5          
+      S2NAME R               
+       S2VHI    1.4          
+       S2VLO     .8          
+      S3NAME R               
+       S3VHI    2            
+       S3VLO    1.3          
+      S4NAME X               
+       S4VHI    2            
+       S4VLO     .8          
+      S5NAME 1               
+       S5VHI    7            
+       S5VLO    2            
+      S6NAME F               
+       S6VHI    2            
+       S6VLO    1.3          
+      S7NAME F               
+       S7VHI    1.4          
+       S7VLO     .8          
+
+
+**** 11/30/17 11:40:27 *********** Evaluation PSpice (Nov 1999) **************
+
+ * C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171130\pspice\Schematic1.sch
+
+
+ ****     Digital to Analog Converter MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               X_U1.DAC8_TIMING 
+       TSWMN   10.000000E-09 
+       TSWTY   10.000000E-09 
+       TSWMX   10.000000E-09 
+
+
+**** 11/30/17 11:40:27 *********** Evaluation PSpice (Nov 1999) **************
+
+ * C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171130\pspice\Schematic1.sch
+
+
+ ****     Digital IO  MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               IO_STD          
+        DRVL  104            
+        DRVH   96.4          
+       AtoD1 AtoD_STD        
+       AtoD2 AtoD_STD_NX     
+       AtoD3 AtoD_STD        
+       AtoD4 AtoD_STD_NX     
+       DtoA1 DtoA_STD        
+       DtoA2 DtoA_STD        
+       DtoA3 DtoA_STD        
+       DtoA4 DtoA_STD        
+      TSWHL1    1.373000E-09 
+      TSWHL2    1.346000E-09 
+      TSWHL3    1.511000E-09 
+      TSWHL4    1.487000E-09 
+      TSWLH1    3.382000E-09 
+      TSWLH2    3.424000E-09 
+      TSWLH3    3.517000E-09 
+      TSWLH4    3.564000E-09 
+       TPWRT  100.000000E+03 
+
+
+
+          JOB CONCLUDED
+
+          TOTAL JOB TIME             .03
+

@@ -1,0 +1,7 @@
+RF -> posar el RF SCOPE del provador i anar mesurant VRMS de les ones
+
+galvanica -> amb selector a 0R, i després comprovar que les resistències en sèrie fan alterar el corrent, mesurat en mA amb el tester
+
+electroestimulació -> canal A (del connector CN4 els 2 pins inferiors), canal B (els 2 pins següents), i aleshores mesurar polsos amb PULSE SCOPE i PULSE del provador (ones amb freqüències variants, mesurar VP dels polsos positius)
+
+lifting -> els 2 pins superiors del connector CN4, i mirar polsos (ona de polsos amb AM, mesurar VPP)

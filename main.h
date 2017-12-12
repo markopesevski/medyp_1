@@ -33,6 +33,82 @@
 #include "Lectura_ADC.h"
 #include "Control_Volumen.h"
 
+typedef enum calibration_values_t
+{
+	CALIBRATION_VALUE_UNDER = 0,
+	CALIBRATION_VALUE_OK = 1,
+	CALIBRATION_VALUE_OVER = 2
+} calibration_values_t;
+
+typedef enum
+{
+	CALIBRATION_READ_SERIAL = 0,
+	CALIBRATION_SAVE_SERIAL = 1,
+	CALIBRATION_READ_TEMP,
+	CALIBRATION_READ_ALARM_TEMP,
+	CALIBRATION_READ_GAL,
+	CALIBRATION_SET_GAL,
+	CALIBRATION_READ_STIM,
+	CALIBRATION_SET_STIM,
+	CALIBRATION_READ_RF,
+	CALIBRATION_SET_RF,
+	CALIBRATION_READ_BIAS,
+	CALIBRATION_SET_BIAS,
+	CALIBRATION_STARTING_RF,
+	CALIBRATION_RF_RUNNING,
+	CALIBRATION_START_SEARCH,
+	CALIBRATION_SEARCHING_VALUE,
+	CALIBRATION_FOUND_VALUE,
+	CALIBRATION_VALUE_NOT_REACHABLE,
+	CALIBRATION_SAVE_VALUES,
+	CALIBRATION_ALL_VALUES_FOUND_FOR_SERIES,
+	CALIBRATION_STOP_RF,
+	CALIBRATION_NO_STATE
+} calibration_process_t;
+
+
+typedef enum
+{
+	STANDBY = 2,
+	READY = 0,
+	ACTIVE = 1,
+	GO_OUT_OF_TEST = 3
+} machine_states_t;
+
+typedef enum
+{
+	NO_TEST = 0,
+	GALVANIC_TEST = 1,
+	STIMULATION_TEST = 2,
+	RF_TEST = 3,
+	CALIBRA_RF = 4
+} test_states_t;
+
+typedef enum
+{
+	RF_value_0 = 0,
+	RF_value_5 = 1,
+	RF_value_10 = 2,
+	RF_value_15 = 3,
+	RF_value_20 = 4,
+	RF_value_25 = 5,
+	RF_value_30 = 6,
+	RF_value_35 = 7,
+	RF_value_40 = 8,
+	RF_value_45 = 9,
+	RF_value_50 = 10,
+	RF_value_55 = 11,
+	RF_value_60 = 12,
+	RF_value_65 = 13,
+	RF_value_70 = 14,
+	RF_value_75 = 15,
+	RF_value_80 = 16,
+	RF_value_85 = 17,
+	RF_value_90 = 18,
+	RF_value_95 = 19,
+	RF_value_100 = 20
+} rf_values_t;
+
 #define DEBUGAR
 
 // System command
@@ -43,7 +119,8 @@
 
 #define T1_TICK					62500		// Tick general -> 	1tick = 50ms 	(a 80MHz).
 #define T3_TICK					3125		// Tick galva -> 	1tick = 10ms 	(a 80MHz).
-#define T4_TICK					62500		// Tick barrido ->	1tick = 50ms 	(a 80MHz).
+///* ORIGINAL */ #define T4_TICK					62500		// Tick barrido ->	1tick = 50ms 	(a 80MHz).
+#define T4_TICK					12500		// Tick barrido ->	1tick = 10ms 	(a 80MHz).
 #define T5_TICK					125			// Tick electrolif->1tick = 25us 	(a 80MHz).
 
 // Valores predeterminados programa.
@@ -70,14 +147,29 @@
 #define PROBE3				3
 
 #define TEMPERATURA_HS		30
-#define TEMPERATURA_ALARMA	90	// A esta temperatura se para la RF.
+/* WIP */
+/* UNCOMMENT WHEN DONE */
+// #define TEMPERATURA_ALARMA	90	// A esta temperatura se para la RF.
+/* ERASE WHEN DONE */
+#define TEMPERATURA_ALARMA	1	// A esta temperatura se para la RF.
+/* WIP */
 #define SEGS_HS				60	// 1 minuto.
 #define VOL_FAB				0//1//5 TODO
 
+/* WIP */
+/* UNCOMMENT WHEN DONE */
+// #define DAC_GAL_FAB			56//150	2.10.17 Se rebaja máxima corriente a 1.5mA
+// #define DAC_STIM_FAB		110
+// #define DAC_RF_FAB			114//195//200
+// #define DAC_BIAS_FAB		82	// Con 82 hay 1.41V en DACBIAS (R153)
+/* ERASE WHEN DONE */
 #define DAC_GAL_FAB			56//150	2.10.17 Se rebaja máxima corriente a 1.5mA
 #define DAC_STIM_FAB		110
 #define DAC_RF_FAB			114//195//200
-#define DAC_BIAS_FAB		82	// Con 82 hay 1.41V en DACBIAS (R153)
+#define DAC_BIAS_FAB		22	// Con 82 hay 1.41V en DACBIAS (R153)
+/* WIP */
+
+
 
 #define TIEMPO_REDUCIR		10	// Tiempo seguido sin detectar conducción para reducir RF. (0,2s x 10 = 2s)
 

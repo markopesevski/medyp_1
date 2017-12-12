@@ -27,12 +27,20 @@ void Carga_TLC5620 (unsigned int datos_dac, unsigned char Num_Dac)
 	unsigned char cont;				
 	unsigned int imagen_datosdac;   //	Imagen datos a cargar en DAC.
 	
+	/* data is shifted bit by bit, and loaded into IC on clk falling edges */
 	for (cont=0;cont<=10;cont++)	// XH entiendo que primero carga el buffer de data
 	{
 		imagen_datosdac = datos_dac&0x400;			// XH envia 11 bits, A1 A0 (indiquen num DAC), RNG (sempre 1), 8bits dades.
-		if (imagen_datosdac == 0x400) DATA_DAC = 1;	// XH carrega el bit 0x400, i els va shiftant a l'esquerra, fins que fa els 11 i carrega tot buffer
-		else DATA_DAC = 0;
+		if (imagen_datosdac == 0x400)
+		{
+			DATA_DAC = 1;	// XH carrega el bit 0x400, i els va shiftant a l'esquerra, fins que fa els 11 i carrega tot buffer
+		}
+		else
+		{
+			DATA_DAC = 0;
+		}
 		
+		/* falling edge to clock data into IC */
 		CLK_DAC = 1;
 		Nop();
 		Nop();

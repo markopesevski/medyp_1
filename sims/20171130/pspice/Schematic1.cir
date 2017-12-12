@@ -1,0 +1,22 @@
+* C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171130\pspice\Schematic1.sch
+
+* Schematics Version 9.1 - Web Update 1
+* Thu Nov 30 11:40:26 2017
+
+
+
+** Analysis setup **
+.tran 0ns 10ms 0 1ms SKIPBP
+
+
+* From [PSPICE NETLIST] section of pspiceev.ini:
+.lib "nom.lib"
+
+.INC "Schematic1.net"
+.INC "Schematic1.als"
+
+
+.probe
+
+
+.END

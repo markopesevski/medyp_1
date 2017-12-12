@@ -1,0 +1,19 @@
+* Schematics Netlist *
+
+
+
+R_R9         0 $N_0001  10k  
+R_R1         $N_0003 $N_0002  1k  
+X_U1         $N_0001 $N_0011 0 
++ $N_0002 $N_0004 $N_0005 $N_0006 $N_0007 $N_0008 $N_0009 $N_0010 $G_DPWR
++  $G_DGND DAC8break 
++PARAMS: MNTYMXDLY=0 IO_LEVEL=0
+V_V2         $N_0011 0 1.5
+R_R4         $N_0003 $N_0006  1k  
+R_R5         $N_0003 $N_0007  1k  
+R_R7         $N_0003 $N_0008  1k  
+R_R6         $N_0003 $N_0009  1k  
+R_R8         $N_0003 $N_0010  1k  
+V_V1         $N_0003 0 3
+R_R2         $N_0003 $N_0004  1k  
+R_R3         $N_0003 $N_0005  1k  
