@@ -134,21 +134,14 @@ unsigned char Cont_Reducir = 0;
 
 
 
-static unsigned int comptador_level = 0;
-static unsigned int comptador_refdacdds = 0;
-
 #define VALOR_INICIAL_LEVEL 200 //180
 #define VALOR_REFDACDDS 200
 static float tensio_fora[256] = {0.0f};
 static unsigned int refdacdds_values[] = {97,100,103,106,109,111,114,117,120};
 static unsigned int refdacdds_results[] = {0,0,0,0,0,0,0,0,0};
 static unsigned int ticks_reading_rf = 0;
-static unsigned int mostres[256] = {0};
 static unsigned int index = 0;
 static float accumulator = 0.0f;
-static unsigned int valor_tlc5620 = 0;
-static unsigned int valor_dds[256] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255};
-
 unsigned char tick_pushbutton_calibra = 0;
 unsigned char tick_calibra = 0;
 float voltage_anrf = 0.0f;
@@ -162,6 +155,15 @@ extern calibration_process_t calibration_status;
 extern unsigned char ReceivedDataBuffer[64] RX_DATA_BUFFER_ADDRESS;
 calibration_values_t calibration_search_result = CALIBRATION_VALUE_UNDER;
 
+static unsigned int mostres[256] = {0};
+static unsigned int comptador_level = 0;
+unsigned int tick_level = 0;
+unsigned int tick_mitjana = 0;
+unsigned char stop = 1;
+unsigned char freq = 0;
+unsigned char barrido = 0;
+unsigned char pujar = 1;
+unsigned char bias_value = 82;
 
 
 
@@ -276,7 +278,116 @@ void Grabar_Flash (void);					// Memoriza variables.
  ** Description:	PROGRAMA PRINCIPAL.								**
  *********************************************************************
  *********************************************************************/
-int main(void)
+ int main(void)
+{
+	Config_System();
+	Config_Ports();
+	Init_Regs();
+
+	Config_Timer1();	// Timer general.
+	Config_Timer4();
+	HS_FAN = 1;				// Enciendo ventilador radiador.
+	Rele.Bit.Rel1 = 1;
+	Rele.Bit.Rel2 = 1;
+	Rele.Bit.Rel3 = 1;
+	Control_TPIC();
+
+	Carga_TLC5620(REFDACBIAS | 200, 3); /* SAFE VALUE <- CRUCIAL */
+	Carga_TLC5620(DACBIAS | bias_value, 3); /* original 82 SAFE VALUE <- CRUCIAL */
+	Carga_TLC5620(REFDACDDS | 127, 3); /* SAFE VALUE */
+	Carga_TLC5620(DACDDS | 127, 3); /* SAFE VALUE */
+	Carga_TLC5620(LEVEL | 255, 1); /* SAFE VALUE <- CRUCIAL */
+
+	while(1)
+	{
+		/* 500 ms */
+		if(stop == 2)
+		{
+			/* 500 ms */
+			if(tick_level >= 10)
+			{
+				tick_level = 0;
+				if(pujar == 1)
+				{
+					tensio_fora[comptador_level] = accumulator/10.0f;
+					accumulator = 0.0f;
+
+					comptador_level++;
+					if(comptador_level >= 55)
+					{
+						comptador_level = 0;
+					}
+				}
+				Carga_TLC5620(LEVEL | 0xFF - comptador_level, 1);
+				Carga_TLC5620(DACBIAS | bias_value, 3);	
+			}
+
+			/* 50 ms -> 10 samples */
+			if(tick_Led >= 1)
+			{
+				tick_Led = 0;
+				mostres[0] = Lectura_RF();
+				accumulator += Lectura_RF();
+				Nop();
+			}
+
+			if(barrido == 1)
+			{
+				if (Sem.Flag_Barrido == 1)
+				{
+					Sem.Flag_Barrido = 0;
+					if (Subiendo == 0)
+					{
+						Frecuencia_Barrido = Frecuencia_Barrido + 5;
+						if (Frecuencia_Barrido >= 300)
+						{
+							Subiendo = 1;
+						}
+					}
+					else
+					{
+						Frecuencia_Barrido = Frecuencia_Barrido - 5;
+						if (Frecuencia_Barrido <= 100)
+						{
+							Subiendo = 0;
+						}
+					}
+					Frecuencia_Resulta = Frecuencia_Barrido*10000;
+					Set_Freq_AD9834(Frecuencia_Resulta);
+				}
+			}
+		}
+
+		if(stop == 1)
+		{
+			Suspend_AD9834();				// Pone a 0 el nivel del DDS.
+			if(barrido == 1)
+			{
+				barrido = 0;
+				Stop_Timer4();
+			}
+			stop = 3;
+		}
+		else if (stop == 0)
+		{
+			if(barrido == 1)
+			{
+				Config_Timer4();
+			}
+			else
+			{
+				Set_Freq_AD9834(freq*1000000);	// Pongo frecuencia.
+			}
+			stop = 2;
+		}
+		else if (stop == 2 || stop == 3)
+		{
+			Nop();
+		}
+	}
+}
+
+int orig_main(void)
 {
 	Config_System();
 	Config_Ports();
@@ -375,7 +486,7 @@ int main(void)
 			Control_TPIC();
 		}
 		/* since it is timed with the TIM1, and 50ms period, every 50 ms: */
-		if(tick_calibra >= 1 && Estoy_Test == CALIBRA_RF)
+		if(tick_calibra >= 5 && Estoy_Test == CALIBRA_RF)
 		{
 			tick_calibra = 0;
 			// if(!HIDRxHandleBusy(USBOutHandle))
@@ -405,6 +516,7 @@ int main(void)
 				Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
 				Carga_TLC5620(DACDDS | dacdds_value, 3);
 				Carga_TLC5620(LEVEL | level_value, 1);
+				voltage_anrf = read_voltage_anrf(Lectura_RF());
 			}
 			else if (calibration_status == CALIBRATION_SEARCHING_VALUE)
 			{
@@ -429,6 +541,13 @@ int main(void)
 					/* value was not correct */
 					calibration_status = CALIBRATION_SEARCHING_VALUE;
 				}
+			}
+			else if(calibration_status == CALIBRATION_WAITING_ANRF_FALL_DOWN)
+			{
+				Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
+				Carga_TLC5620(DACDDS | dacdds_value, 3);
+				Carga_TLC5620(LEVEL | level_value, 1);
+				voltage_anrf = read_voltage_anrf(Lectura_RF());
 			}
 			else if(calibration_status == CALIBRATION_VALUE_NOT_REACHABLE)
 			{
@@ -1211,6 +1330,9 @@ void __ISR(_TIMER_1_VECTOR, ipl4) Timer1Handler(void)
 {
 	mT1ClearIntFlag();			// Clear the interrupt flag.
 
+	tick_level++;
+	tick_mitjana++;
+
 	if (Estoy_Test == CALIBRA_RF)
 	{
 		tick_pushbutton_calibra++;
@@ -1424,14 +1546,12 @@ void __ISR(_TIMER_4_VECTOR, ipl3) Timer4Handler(void)
 {
 	mT4ClearIntFlag();		// Clear the interrupt flag.
 
-	/* UNCOMMENT WHEN DONE */
 	tick_T4++;
 	if (tick_T4 >= 3)		// 150ms
 	{
 		tick_T4 = 0;
 		Sem.Flag_Barrido = 1;
 	}
-	/* WIP */
 }
 
 /********************************************************************

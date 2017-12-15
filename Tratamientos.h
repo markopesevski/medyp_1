@@ -18,7 +18,7 @@
  ********************************************************************/
 
 /* will initialize with 255 because it is the most secure, will not auto-destruct */
-#define MARGIN_PERCENTAGE 0.01 /* 1% expressed ready for using with multiplication and division operation */
+#define MARGIN_PERCENTAGE 0.99 /* 1% expressed ready for using with multiplication and division operation */
 #define DACDDS_MAX (255-42)
 #define DACDDS_MIN (0+42)
 #define LEVEL_MAX 255

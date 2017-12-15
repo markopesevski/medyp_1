@@ -58,6 +58,7 @@ typedef enum
 	CALIBRATION_RF_RUNNING,
 	CALIBRATION_START_SEARCH,
 	CALIBRATION_SEARCHING_VALUE,
+	CALIBRATION_WAITING_ANRF_FALL_DOWN,
 	CALIBRATION_FOUND_VALUE,
 	CALIBRATION_VALUE_NOT_REACHABLE,
 	CALIBRATION_SAVE_VALUES,
@@ -106,7 +107,8 @@ typedef enum
 	RF_value_85 = 17,
 	RF_value_90 = 18,
 	RF_value_95 = 19,
-	RF_value_100 = 20
+	RF_value_100 = 20,
+	RF_calibrate = 21
 } rf_values_t;
 
 #define DEBUGAR
@@ -156,18 +158,10 @@ typedef enum
 #define SEGS_HS				60	// 1 minuto.
 #define VOL_FAB				0//1//5 TODO
 
-/* WIP */
-/* UNCOMMENT WHEN DONE */
-// #define DAC_GAL_FAB			56//150	2.10.17 Se rebaja máxima corriente a 1.5mA
-// #define DAC_STIM_FAB		110
-// #define DAC_RF_FAB			114//195//200
-// #define DAC_BIAS_FAB		82	// Con 82 hay 1.41V en DACBIAS (R153)
-/* ERASE WHEN DONE */
 #define DAC_GAL_FAB			56//150	2.10.17 Se rebaja máxima corriente a 1.5mA
 #define DAC_STIM_FAB		110
 #define DAC_RF_FAB			114//195//200
-#define DAC_BIAS_FAB		22	// Con 82 hay 1.41V en DACBIAS (R153)
-/* WIP */
+#define DAC_BIAS_FAB		82	// Con 82 hay 1.41V en DACBIAS (R153)
 
 
 

@@ -73,6 +73,7 @@ unsigned char Cont_Envio_G = 0;
 unsigned char count_messages = 0;
 unsigned char send_message = 0;
 
+extern float voltage_anrf;
 
 
 
@@ -494,190 +495,118 @@ void calibration_process(unsigned char input)
 		case CALIBRATION_SAVE_VALUES:
 		case CALIBRATION_READ_TEMP:
 			/* TODO should be a more or less automatic process with which the machine adjusts itself linearly between a max and a min */
-			/* SAVE VALUE TO TABLE for accessing when starting RF */
 
-			/* SAVES VALUE TO TABLE */
-			if (index_percentage_value < 21)
+			if (index_percentage_value < RF_calibrate || (input == CALIBRATION_SAVE_VALUES && calibration_status == CALIBRATION_FOUND_VALUE))
 			{
+				/* SAVE VALUE TO TABLE for accessing when starting RF */
 				if(handle_value == CORPORAL)
 				{
 					if(freq_value == 10)
 					{
-						if (index_percentage_value == 1)
-						{
-							array_dacdds_1mhz_corporal[index_percentage_value] = dacdds_value;
-							array_refdacdds_1mhz_corporal[index_percentage_value] = refdacdds_value;
-							array_level_1mhz_corporal[index_percentage_value] = level_value;
-							array_lect_rf_1mhz_corporal[index_percentage_value] = Lectura_RF();
-							// array_anrf_1mhz_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_1mhz_corporal[index_percentage_value]);
-							array_knowns_1mhz_corporal[index_percentage_value] = 1;
-						}
-						else if (index_percentage_value == 20)
-						{
-							array_dacdds_1mhz_corporal[index_percentage_value] = dacdds_value;
-							array_refdacdds_1mhz_corporal[index_percentage_value] = refdacdds_value;
-							array_level_1mhz_corporal[index_percentage_value] = level_value;
-							array_lect_rf_1mhz_corporal[index_percentage_value] = Lectura_RF();
-							// array_anrf_1mhz_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_1mhz_corporal[index_percentage_value]);
-							array_knowns_1mhz_corporal[index_percentage_value] = 1;
-						}
+						array_dacdds_1mhz_corporal[index_percentage_value] = dacdds_value;
+						array_refdacdds_1mhz_corporal[index_percentage_value] = refdacdds_value;
+						array_level_1mhz_corporal[index_percentage_value] = level_value;
+						array_lect_rf_1mhz_corporal[index_percentage_value] = Lectura_RF();
+						// array_anrf_1mhz_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_1mhz_corporal[index_percentage_value]);
+						array_knowns_1mhz_corporal[index_percentage_value] = 1;
 					}
 					else if(freq_value == 30)
 					{
-						if (index_percentage_value == 1)
-						{
-							array_dacdds_3mhz_corporal[index_percentage_value] = dacdds_value;
-							array_refdacdds_3mhz_corporal[index_percentage_value] = refdacdds_value;
-							array_level_3mhz_corporal[index_percentage_value] = level_value;
-							array_lect_rf_3mhz_corporal[index_percentage_value] = Lectura_RF();
-							// array_anrf_3mhz_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_3mhz_corporal[index_percentage_value]);
-							array_knowns_3mhz_corporal[index_percentage_value] = 1;
-						}
-						else if (index_percentage_value == 20)
-						{
-							array_dacdds_3mhz_corporal[index_percentage_value] = dacdds_value;
-							array_refdacdds_3mhz_corporal[index_percentage_value] = refdacdds_value;
-							array_level_3mhz_corporal[index_percentage_value] = level_value;
-							array_lect_rf_3mhz_corporal[index_percentage_value] = Lectura_RF();
-							// array_anrf_3mhz_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_3mhz_corporal[index_percentage_value]);
-							array_knowns_3mhz_corporal[index_percentage_value] = 1;
-						}
+						array_dacdds_3mhz_corporal[index_percentage_value] = dacdds_value;
+						array_refdacdds_3mhz_corporal[index_percentage_value] = refdacdds_value;
+						array_level_3mhz_corporal[index_percentage_value] = level_value;
+						array_lect_rf_3mhz_corporal[index_percentage_value] = Lectura_RF();
+						// array_anrf_3mhz_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_3mhz_corporal[index_percentage_value]);
+						array_knowns_3mhz_corporal[index_percentage_value] = 1;
 					}
 					else if (freq_value == 0xBA)
 					{
-						if (index_percentage_value == 1)
-						{
-							array_dacdds_ba_corporal[index_percentage_value] = dacdds_value;
-							array_refdacdds_ba_corporal[index_percentage_value] = refdacdds_value;
-							array_level_ba_corporal[index_percentage_value] = level_value;
-							array_lect_rf_ba_corporal[index_percentage_value] = Lectura_RF();
-							// array_anrf_ba_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_ba_corporal[index_percentage_value]);
-							array_knowns_ba_corporal[index_percentage_value] = 1;
-						}
-						else if (index_percentage_value == 20)
-						{
-							array_dacdds_ba_corporal[index_percentage_value] = dacdds_value;
-							array_refdacdds_ba_corporal[index_percentage_value] = refdacdds_value;
-							array_level_ba_corporal[index_percentage_value] = level_value;
-							array_lect_rf_ba_corporal[index_percentage_value] = Lectura_RF();
-							// array_anrf_ba_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_ba_corporal[index_percentage_value]);
-							array_knowns_ba_corporal[index_percentage_value] = 1;
-						}
-
+						array_dacdds_ba_corporal[index_percentage_value] = dacdds_value;
+						array_refdacdds_ba_corporal[index_percentage_value] = refdacdds_value;
+						array_level_ba_corporal[index_percentage_value] = level_value;
+						array_lect_rf_ba_corporal[index_percentage_value] = Lectura_RF();
+						// array_anrf_ba_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_ba_corporal[index_percentage_value]);
+						array_knowns_ba_corporal[index_percentage_value] = 1;
 					}
 				}
 				else if (handle_value == ESPE || handle_value == FACIAL)
 				{
 					if(freq_value == 10)
 					{
-						if (index_percentage_value == 1)
-						{
-							array_dacdds_1mhz_facial[index_percentage_value] = dacdds_value;
-							array_refdacdds_1mhz_facial[index_percentage_value] = refdacdds_value;
-							array_level_1mhz_facial[index_percentage_value] = level_value;
-							array_lect_rf_1mhz_facial[index_percentage_value] = Lectura_RF();
-							// array_anrf_1mhz_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_1mhz_facial[index_percentage_value]);
-							array_knowns_1mhz_facial[index_percentage_value] = 1;
-						}
-						else if (index_percentage_value == 20)
-						{
-							array_dacdds_1mhz_facial[index_percentage_value] = dacdds_value;
-							array_refdacdds_1mhz_facial[index_percentage_value] = refdacdds_value;
-							array_level_1mhz_facial[index_percentage_value] = level_value;
-							array_lect_rf_1mhz_facial[index_percentage_value] = Lectura_RF();
-							// array_anrf_1mhz_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_1mhz_facial[index_percentage_value]);
-							array_knowns_1mhz_facial[index_percentage_value] = 1;
-						}
+						array_dacdds_1mhz_facial[index_percentage_value] = dacdds_value;
+						array_refdacdds_1mhz_facial[index_percentage_value] = refdacdds_value;
+						array_level_1mhz_facial[index_percentage_value] = level_value;
+						array_lect_rf_1mhz_facial[index_percentage_value] = Lectura_RF();
+						// array_anrf_1mhz_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_1mhz_facial[index_percentage_value]);
+						array_knowns_1mhz_facial[index_percentage_value] = 1;
 					}
 					else if(freq_value == 30)
 					{
-						if (index_percentage_value == 1)
-						{
-							array_dacdds_3mhz_facial[index_percentage_value] = dacdds_value;
-							array_refdacdds_3mhz_facial[index_percentage_value] = refdacdds_value;
-							array_level_3mhz_facial[index_percentage_value] = level_value;
-							array_lect_rf_3mhz_facial[index_percentage_value] = Lectura_RF();
-							// array_anrf_3mhz_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_3mhz_facial[index_percentage_value]);
-							array_knowns_3mhz_facial[index_percentage_value] = 1;
-						}
-						else if (index_percentage_value == 20)
-						{
-							array_dacdds_3mhz_facial[index_percentage_value] = dacdds_value;
-							array_refdacdds_3mhz_facial[index_percentage_value] = refdacdds_value;
-							array_level_3mhz_facial[index_percentage_value] = level_value;
-							array_lect_rf_3mhz_facial[index_percentage_value] = Lectura_RF();
-							// array_anrf_3mhz_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_3mhz_facial[index_percentage_value]);
-							array_knowns_3mhz_facial[index_percentage_value] = 1;
-						}
+						array_dacdds_3mhz_facial[index_percentage_value] = dacdds_value;
+						array_refdacdds_3mhz_facial[index_percentage_value] = refdacdds_value;
+						array_level_3mhz_facial[index_percentage_value] = level_value;
+						array_lect_rf_3mhz_facial[index_percentage_value] = Lectura_RF();
+						// array_anrf_3mhz_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_3mhz_facial[index_percentage_value]);
+						array_knowns_3mhz_facial[index_percentage_value] = 1;
 					}
 					else if (freq_value == 0xBA)
 					{
-						if (index_percentage_value == 1)
-						{
-							array_dacdds_ba_facial[index_percentage_value] = dacdds_value;
-							array_refdacdds_ba_facial[index_percentage_value] = refdacdds_value;
-							array_level_ba_facial[index_percentage_value] = level_value;
-							array_lect_rf_ba_facial[index_percentage_value] = Lectura_RF();
-							// array_anrf_ba_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_ba_facial[index_percentage_value]);
-							array_knowns_ba_facial[index_percentage_value] = 1;
-						}
-						else if (index_percentage_value == 20)
-						{
-							array_dacdds_ba_facial[index_percentage_value] = dacdds_value;
-							array_refdacdds_ba_facial[index_percentage_value] = refdacdds_value;
-							array_level_ba_facial[index_percentage_value] = level_value;
-							array_lect_rf_ba_facial[index_percentage_value] = Lectura_RF();
-							// array_anrf_ba_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_ba_facial[index_percentage_value]);
-							array_knowns_ba_facial[index_percentage_value] = 1;
-						}
+						array_dacdds_ba_facial[index_percentage_value] = dacdds_value;
+						array_refdacdds_ba_facial[index_percentage_value] = refdacdds_value;
+						array_level_ba_facial[index_percentage_value] = level_value;
+						array_lect_rf_ba_facial[index_percentage_value] = Lectura_RF();
+						// array_anrf_ba_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_ba_facial[index_percentage_value]);
+						array_knowns_ba_facial[index_percentage_value] = 1;
 					}
 				}
 			}
-			/* SEARCH FOR DACDDS AND LEVEL VALUES KNOWING DESIRED VOLTAGES */
-			if (index_percentage_value == 21)
+			else if (index_percentage_value == RF_calibrate)
 			{
-				if(handle_value == CORPORAL)
-				{
-					if(freq_value == 10)
-					{
-						/* only when you already know values 1 and 20 */
-						if((array_knowns_1mhz_corporal[1] & array_knowns_1mhz_corporal[20]) == 1)
-						{
-							index_percentage_value = 2;
-							calibration_status = CALIBRATION_START_SEARCH;
-						}
-					}
-					else if(freq_value == 30)
-					{
-						/* only when you already know values 1 and 20 */
-						if((array_knowns_3mhz_corporal[1] & array_knowns_3mhz_corporal[20]) == 1)
-						{
-							index_percentage_value = 2;
-							calibration_status = CALIBRATION_START_SEARCH;
-						}
-					}
-				}
-				else if(handle_value == ESPE || handle_value == FACIAL)
-				{
-					if(freq_value == 10)
-					{
-						/* only when you already know values 1 and 20 */
-						if((array_knowns_1mhz_facial[1] & array_knowns_1mhz_facial[20]) == 1)
-						{
-							index_percentage_value = 2;
-							calibration_status = CALIBRATION_START_SEARCH;
-						}
-					}
-					else if(freq_value == 30)
-					{
-						/* only when you already know values 1 and 20 */
-						if((array_knowns_3mhz_facial[1] & array_knowns_3mhz_facial[20]) == 1)
-						{
-							index_percentage_value = 2;
-							calibration_status = CALIBRATION_START_SEARCH;
-						}
-					}
-				}
+				/* SEARCH FOR DACDDS AND LEVEL VALUES KNOWING DESIRED VOLTAGES */
+				index_percentage_value = RF_value_5;
+				calibration_status = CALIBRATION_START_SEARCH;
+				// if(handle_value == CORPORAL)
+				// {
+				// 	if(freq_value == 10)
+				// 	{
+				// 		/* only when you already know values 1 and 20 */
+				// 		if((array_knowns_1mhz_corporal[1] & array_knowns_1mhz_corporal[20]) == 1)
+				// 		{
+				// 			index_percentage_value = 2;
+				// 			calibration_status = CALIBRATION_START_SEARCH;
+				// 		}
+				// 	}
+				// 	else if(freq_value == 30)
+				// 	{
+				// 		/* only when you already know values 1 and 20 */
+				// 		if((array_knowns_3mhz_corporal[1] & array_knowns_3mhz_corporal[20]) == 1)
+				// 		{
+				// 			index_percentage_value = 2;
+				// 			calibration_status = CALIBRATION_START_SEARCH;
+				// 		}
+				// 	}
+				// }
+				// else if(handle_value == ESPE || handle_value == FACIAL)
+				// {
+				// 	if(freq_value == 10)
+				// 	{
+				// 		/* only when you already know values 1 and 20 */
+				// 		if((array_knowns_1mhz_facial[1] & array_knowns_1mhz_facial[20]) == 1)
+				// 		{
+				// 			index_percentage_value = 2;
+				// 			calibration_status = CALIBRATION_START_SEARCH;
+				// 		}
+				// 	}
+				// 	else if(freq_value == 30)
+				// 	{
+				// 		/* only when you already know values 1 and 20 */
+				// 		if((array_knowns_3mhz_facial[1] & array_knowns_3mhz_facial[20]) == 1)
+				// 		{
+				// 			index_percentage_value = 2;
+				// 			calibration_status = CALIBRATION_START_SEARCH;
+				// 		}
+				// 	}
+				// }
 			}
 			// Lect_RF = Lectura_RF();
 			// voltage = read_voltage_anrf(Lect_RF);
@@ -698,9 +627,9 @@ void calibration_process(unsigned char input)
 		break;
 		case CALIBRATION_SET_GAL:
 			/* save ReceivedDataBuffer[2] as refdacdds value */
-			if(ReceivedDataBuffer[2] <= 127)
+			if(ReceivedDataBuffer[2] != REFDACDDS_VALUE)
 			{
-				refdacdds_value = 127;
+				refdacdds_value = REFDACDDS_VALUE;
 			}
 			else
 			{
@@ -731,9 +660,9 @@ void calibration_process(unsigned char input)
 		break;
 		case CALIBRATION_SET_BIAS:
 			/* save ReceivedDataBuffer[2] as % value */
-			if(index_percentage_value > 21)
+			if(index_percentage_value > RF_calibrate)
 			{
-				index_percentage_value = 21;
+				index_percentage_value = RF_calibrate;
 			}
 			else
 			{
@@ -750,16 +679,21 @@ void calibration_process(unsigned char input)
 			calibration_process(CALIBRATION_SAVE_VALUES);
 			/* wrap around 20 to not overflow any array */
 			index_percentage_value++;
-			if(index_percentage_value == 21)
+			if(index_percentage_value == RF_calibrate)
 			{
 				calibration_status = CALIBRATION_ALL_VALUES_FOUND_FOR_SERIES;
-				index_percentage_value = 21; /* going to leave the value at 21 because this value is what operator should be seeing on screen */
-			}
-			else if(index_percentage_value == 1)
-			{
-
+				index_percentage_value = RF_calibrate; /* going to leave the value at RF_calibrate because this value is what operator should be seeing on screen */
 			}
 			else
+			{
+				refdacdds_value = REFDACDDS_VALUE;
+				dacdds_value = DACDDS_MAX;
+				level_value = LEVEL_MAX;
+				calibration_status = CALIBRATION_WAITING_ANRF_FALL_DOWN;
+			}
+		break;
+		case CALIBRATION_WAITING_ANRF_FALL_DOWN:
+			if(voltage_anrf < 20.0f)
 			{
 				calibration_status = CALIBRATION_START_SEARCH;
 			}
@@ -1320,40 +1254,43 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 					// Carga_TLC5620(REFDACDDS | 119,3);	// Barrido
 					Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// Barrido
 				}
-				if (V_RF == 0)
-				{
-					Nop();
-				}
-				else
-				{
-					V_RF = AuxDac_RF - V_RF;//230 - V_RF;
-				}
+				// if (V_RF == 0)
+				// {
+				// 	Nop();
+				// }
+				// else
+				// {
+				// 	V_RF = AuxDac_RF - V_RF;//230 - V_RF;
+				// }
 			}
 			else
 			{
 				if (F_RF == 10)
 				{
 					// Carga_TLC5620(REFDACDDS | 195,3);	// 1 MHz
-					Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 1 MHz
+					// Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 1 MHz
+					Carga_TLC5620(REFDACDDS | array_refdacdds_1mhz_facial[V_RF],3);	// 1 MHz
+					Carga_TLC5620(DACDDS | array_dacdds_1mhz_facial[V_RF],3);
+					Carga_TLC5620(LEVEL | array_level_1mhz_facial[V_RF],1);
 				}
 				if (F_RF == 30)
 				{
 					// Carga_TLC5620(REFDACDDS | 195,3);	// 3 MHz
-					Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 3 MHz
+					// Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 3 MHz
 				}
 				if (F_RF == 0xBA)
 				{
 					// Carga_TLC5620(REFDACDDS | 195,3);	// Barrido
 					Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// Barrido
 				}
-				if (V_RF == 0)
-				{
-					Nop();
-				}
-				else
-				{
-					V_RF = 148 - V_RF;
-				}
+				// if (V_RF == 0)
+				// {
+				// 	Nop();
+				// }
+				// else
+				// {
+				// 	V_RF = 148 - V_RF;
+				// }
 			}
 
 
@@ -1387,8 +1324,8 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 			/**/
 
 			// Carga_TLC5620(DACDDS | V_RF,3);
-			Carga_TLC5620(DACDDS | dacdds_value,3);
-			Carga_TLC5620(LEVEL | level_value,1);
+			// Carga_TLC5620(DACDDS | dacdds_value,3);
+			// Carga_TLC5620(LEVEL | level_value,1);
 
 
 			if (F_RF == 0xBA)		// Hacer barrido. Empiezo siempre por 1 Mhz.
