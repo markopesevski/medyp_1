@@ -608,22 +608,6 @@ void calibration_process(unsigned char input)
 				// 	}
 				// }
 			}
-			// Lect_RF = Lectura_RF();
-			// voltage = read_voltage_anrf(Lect_RF);
-			// Nop();
-
-			// /* prepare answer TEMP */
-			// ToSendDataBuffer[0] = 4;
-			// ToSendDataBuffer[1] = READ_TEMP;
-			// ToSendDataBuffer[2] = Lectura_RF();
-			// /* calculate checksum */
-			// Calc_Check();
-			// /* send to host */
-			// while(HIDTxHandleBusy(USBInHandle))
-			// {
-			// 	Nop();
-			// }
-			// USBInHandle = HIDTxPacket(HID_EP,(BYTE*)&ToSendDataBuffer[0],64);	// Prepare the USB module to send the data packet to the host.
 		break;
 		case CALIBRATION_SET_GAL:
 			/* save ReceivedDataBuffer[2] as refdacdds value */
