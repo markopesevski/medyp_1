@@ -200,6 +200,29 @@ unsigned int Lectura_RF(void)
 }
 
 /********************************************************************
+ * Function:	(ADC1BUF0)Lectura_24VRF()							*
+ * Definition:	Rutina para leer tensión 24VRF.						*
+ ********************************************************************/
+unsigned int Lectura_24VRF(void)
+{
+	AD1CHS = (ADC_CH0_POS_SAMPLEA_AN15 | ADC_CH0_NEG_SAMPLEA_NVREF);
+	DelayUs(1);
+
+	AD1CON1bits.ADON = 1;			// Turn on ADC.
+	DelayUs(1);
+
+	/* FIXME!!!! DANGEROUS: CAN LEAD TO INFINITE LOOP */
+	while(!IFS1bits.AD1IF)			// Esperar conversión realizada.
+	{
+
+	}
+	DelayUs(1);
+	IFS1bits.AD1IF = 0;
+
+	return (ADC1BUF0);
+}
+
+/********************************************************************
  * Function:	(ADC1BUF0)Lectura_Probe(Canal_Prob)					*
  * Definition:	Rutina para leer resistencias aplicadores.			*
  ********************************************************************/
