@@ -516,7 +516,14 @@ int orig_main(void)
 				Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
 				Carga_TLC5620(DACDDS | dacdds_value, 3);
 				Carga_TLC5620(LEVEL | level_value, 1);
-				voltage_anrf = read_voltage_anrf(Lectura_RF());
+				if(freq_value == 10)
+				{
+					voltage_anrf = read_voltage_anrf_1mhz(Lectura_RF());
+				}
+				else if(freq_value == 30)	
+				{
+					voltage_anrf = read_voltage_anrf_3mhz(Lectura_RF());
+				}	
 			}
 			else if (calibration_status == CALIBRATION_SEARCHING_VALUE)
 			{
@@ -524,7 +531,14 @@ int orig_main(void)
 				Carga_TLC5620(DACDDS | dacdds_value, 3);
 				Carga_TLC5620(LEVEL | level_value, 1);
 
-				voltage_anrf = read_voltage_anrf(Lectura_RF());
+				if(freq_value == 10)
+				{
+					voltage_anrf = read_voltage_anrf_1mhz(Lectura_RF());
+				}
+				else if(freq_value == 30)	
+				{
+					voltage_anrf = read_voltage_anrf_3mhz(Lectura_RF());
+				}	
 				calibration_search_result = (calibration_values_t) is_voltage_correct(voltage_anrf, index_percentage_value, handle_value, freq_value);
 				if(dacdds_value == DACDDS_MIN && calibration_search_result == CALIBRATION_VALUE_UNDER)
 				{
@@ -547,7 +561,15 @@ int orig_main(void)
 				Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
 				Carga_TLC5620(DACDDS | dacdds_value, 3);
 				Carga_TLC5620(LEVEL | level_value, 1);
-				voltage_anrf = read_voltage_anrf(Lectura_RF());
+				
+				if(freq_value == 10)
+				{
+					voltage_anrf = read_voltage_anrf_1mhz(Lectura_RF());
+				}
+				else if(freq_value == 30)
+				{
+					voltage_anrf = read_voltage_anrf_3mhz(Lectura_RF());
+				}	
 			}
 			else if(calibration_status == CALIBRATION_VALUE_NOT_REACHABLE)
 			{

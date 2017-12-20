@@ -48,7 +48,8 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF);	// Rutina para poner e
 void Apaga_RF(void);										// Rutina para apagar la RF.
 void Responder(unsigned char Orden_Emb);					// Contesta las tramas de la INTAB.
 void calibration_process(unsigned char input);				// Rutina para procesar órdenes en calibración de RF.
-float read_voltage_anrf(unsigned int adc_value);			// Rutina para leer la tensión RMS que hay en ANRF.
+float read_voltage_anrf_1mhz(unsigned int adc_value);		// Rutina para leer la tensión RMS que hay en ANRF.
+float read_voltage_anrf_3mhz(unsigned int adc_value);		// Rutina para leer la tensión RMS que hay en ANRF.
 unsigned char is_voltage_correct(float voltage, unsigned char index, unsigned char handle, unsigned char frequency);
 
 /****************************** EOF *********************************/

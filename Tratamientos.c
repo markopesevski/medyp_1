@@ -507,7 +507,7 @@ void calibration_process(unsigned char input)
 						array_refdacdds_1mhz_corporal[index_percentage_value] = refdacdds_value;
 						array_level_1mhz_corporal[index_percentage_value] = level_value;
 						array_lect_rf_1mhz_corporal[index_percentage_value] = Lectura_RF();
-						// array_anrf_1mhz_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_1mhz_corporal[index_percentage_value]);
+						// array_anrf_1mhz_corporal[index_percentage_value] = read_voltage_anrf_1mhz(array_lect_rf_1mhz_corporal[index_percentage_value]);
 						array_knowns_1mhz_corporal[index_percentage_value] = 1;
 					}
 					else if(freq_value == 30)
@@ -516,7 +516,7 @@ void calibration_process(unsigned char input)
 						array_refdacdds_3mhz_corporal[index_percentage_value] = refdacdds_value;
 						array_level_3mhz_corporal[index_percentage_value] = level_value;
 						array_lect_rf_3mhz_corporal[index_percentage_value] = Lectura_RF();
-						// array_anrf_3mhz_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_3mhz_corporal[index_percentage_value]);
+						// array_anrf_3mhz_corporal[index_percentage_value] = read_voltage_anrf_3mhz(array_lect_rf_3mhz_corporal[index_percentage_value]);
 						array_knowns_3mhz_corporal[index_percentage_value] = 1;
 					}
 					else if (freq_value == 0xBA)
@@ -537,7 +537,7 @@ void calibration_process(unsigned char input)
 						array_refdacdds_1mhz_facial[index_percentage_value] = refdacdds_value;
 						array_level_1mhz_facial[index_percentage_value] = level_value;
 						array_lect_rf_1mhz_facial[index_percentage_value] = Lectura_RF();
-						// array_anrf_1mhz_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_1mhz_facial[index_percentage_value]);
+						// array_anrf_1mhz_facial[index_percentage_value] = read_voltage_anrf_1mhz(array_lect_rf_1mhz_facial[index_percentage_value]);
 						array_knowns_1mhz_facial[index_percentage_value] = 1;
 					}
 					else if(freq_value == 30)
@@ -546,7 +546,7 @@ void calibration_process(unsigned char input)
 						array_refdacdds_3mhz_facial[index_percentage_value] = refdacdds_value;
 						array_level_3mhz_facial[index_percentage_value] = level_value;
 						array_lect_rf_3mhz_facial[index_percentage_value] = Lectura_RF();
-						// array_anrf_3mhz_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_3mhz_facial[index_percentage_value]);
+						// array_anrf_3mhz_facial[index_percentage_value] = read_voltage_anrf_3mhz(array_lect_rf_3mhz_facial[index_percentage_value]);
 						array_knowns_3mhz_facial[index_percentage_value] = 1;
 					}
 					else if (freq_value == 0xBA)
@@ -752,12 +752,16 @@ void calibration_process(unsigned char input)
 }
 
 /********************************************************************
- * Function:	read_voltage_anrf(adc_value)						*
+ * Function:	read_voltage_anrf_FREQ(adc_value)					*
  * Definition:	Rutina para leer la tensión RMS que hay en ANRF		*
  ********************************************************************/
-float read_voltage_anrf(unsigned int adc_value)
+float read_voltage_anrf_1mhz(unsigned int adc_value)
 {
 	return (0.1042f * adc_value + 12.422f)*1.0f;
+}
+float read_voltage_anrf_3mhz(unsigned int adc_value)
+{
+	return (0.1237f * adc_value + 13.133f)*1.0f;
 }
 
 /********************************************************************

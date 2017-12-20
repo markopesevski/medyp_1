@@ -1,0 +1,21 @@
+Circuit: * C:\Users\usuario\Desktop\Mesotreat - PIC32MX564F128H v1.0.300\sims\20171218\current_limiter.asc
+
+Per .tran options, skipping operating point for transient analysis.
+
+Date: Tue Dec 19 16:42:54 2017
+Total elapsed time: 0.080 seconds.
+
+tnom = 27
+temp = 27
+method = modified trap
+totiter = 1051
+traniter = 1051
+tranpoints = 336
+accept = 307
+rejected = 29
+matrix size = 13
+fillins = 8
+solver = Normal
+Matrix Compiler1: 1.37 KB object code size  0.4/0.1/[0.1]
+Matrix Compiler2: off  [0.1]/0.2/0.1
+
