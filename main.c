@@ -136,14 +136,14 @@ unsigned char Cont_Reducir = 0;
 
 #define VALOR_INICIAL_LEVEL 200 //180
 #define VALOR_REFDACDDS 200
-static float tensio_fora[256] = {0.0f};
+volatile static float tensio_fora[256] = {0.0f};
 static unsigned int refdacdds_values[] = {97,100,103,106,109,111,114,117,120};
 static unsigned int refdacdds_results[] = {0,0,0,0,0,0,0,0,0};
 static unsigned int ticks_reading_rf = 0;
 static unsigned int index = 0;
 static float accumulator = 0.0f;
-unsigned char tick_pushbutton_calibra = 0;
-unsigned char tick_calibra = 0;
+static unsigned char tick_pushbutton_calibra = 0;
+static unsigned char tick_calibra = 0;
 float voltage_anrf = 0.0f;
 extern unsigned char freq_value;
 extern unsigned char handle_value;
@@ -157,13 +157,15 @@ calibration_values_t calibration_search_result = CALIBRATION_VALUE_UNDER;
 
 static unsigned int mostres[256] = {0};
 static unsigned int comptador_level = 0;
-unsigned int tick_level = 0;
-unsigned int tick_mitjana = 0;
-unsigned char stop = 1;
-unsigned char freq = 0;
-unsigned char barrido = 0;
-unsigned char pujar = 1;
-unsigned char bias_value = 82;
+volatile static unsigned int tick_level = 0;
+volatile static unsigned int tick_mitjana = 0;
+static unsigned char stop = 1;
+static unsigned char freq = 1;
+static unsigned char barrido = 0;
+static unsigned char pujar = 0;
+static unsigned char baixar = 0;
+static unsigned char bias_value = 82;
+static float temperatura = 0.0f;
 
 
 
@@ -304,31 +306,45 @@ void Grabar_Flash (void);					// Memoriza variables.
 		if(stop == 2)
 		{
 			/* 500 ms */
-			if(tick_level >= 10)
+			if(tick_level >= 500)
 			{
 				tick_level = 0;
 				if(pujar == 1)
 				{
-					tensio_fora[comptador_level] = accumulator/10.0f;
-					accumulator = 0.0f;
-
 					comptador_level++;
-					if(comptador_level >= 55)
+					if(comptador_level >= 60)
 					{
 						comptador_level = 0;
 					}
 				}
+				else if(baixar == 1)
+				{
+					comptador_level--;
+					if(comptador_level == 0)
+					{
+						comptador_level = 60;
+					}
+				}
+				tensio_fora[comptador_level] = (accumulator/500.0f);
+				tensio_fora[comptador_level] = (0.1237 * tensio_fora[comptador_level]) + 13.133; //0,1237x + 13,133
+				accumulator = 0.0f;
 				Carga_TLC5620(LEVEL | 0xFF - comptador_level, 1);
 				Carga_TLC5620(DACBIAS | bias_value, 3);	
 			}
 
-			/* 50 ms -> 10 samples */
+			/* 1 ms -> 500 samples */
 			if(tick_Led >= 1)
 			{
-				tick_Led = 0;
 				mostres[0] = Lectura_RF();
 				accumulator += Lectura_RF();
+				temperatura = Lectura_Temp();
+				if(temperatura >= 90)
+				{
+					Led.Bit.LedPB = ~Led.Bit.LedPB;
+					Control_TPIC();
+				}	
 				Nop();
+				tick_Led = 0;
 			}
 
 			if(barrido == 1)

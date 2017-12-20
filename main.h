@@ -119,7 +119,8 @@ typedef enum
 #define	GetPeripheralClock()	(SYS_FREQ/(1 << OSCCONbits.PBDIV))
 #define GetInstructionClock()	(SYS_FREQ)
 
-#define T1_TICK					62500		// Tick general -> 	1tick = 50ms 	(a 80MHz).
+///* ORIGINAL */ #define T1_TICK					62500		// Tick general -> 	1tick = 50ms 	(a 80MHz).
+#define T1_TICK					1250		// Tick general -> 	1tick = 1ms 	(a 80MHz).
 #define T3_TICK					3125		// Tick galva -> 	1tick = 10ms 	(a 80MHz).
 ///* ORIGINAL */ #define T4_TICK					62500		// Tick barrido ->	1tick = 50ms 	(a 80MHz).
 #define T4_TICK					12500		// Tick barrido ->	1tick = 10ms 	(a 80MHz).
