@@ -17,48 +17,42 @@
  *																	*
  ********************************************************************/
 #include "main.h"
-/* need 21 because there are 21 steps (from 0%, 5%, 10%... to 100%) */
-unsigned char array_knowns_1mhz_facial[21] = {0};
-unsigned char array_refdacdds_1mhz_facial[21] = {ARRAY_REFDACDDS};
-unsigned char array_dacdds_1mhz_facial[21] = {ARRAY_DACDDS};
-unsigned char array_level_1mhz_facial[21] = {ARRAY_LEVEL};
-unsigned int array_lect_rf_1mhz_facial[21] = {0};
-float array_anrf_1mhz_facial[21] = {ARRAY_ANRF_1MHZ_FACIAL};
+/* matrixes will be: [6][21]
+*  [6] because there are 6 different arrays:
+*		[0] 1 MHz facial
+*		[1] 1 MHz corporal
+*		[2] 3 MHz facial
+*		[3] 3 MHz corporal
+*		[4] barrido facial
+*		[5] barrido corporal
+*  and then there are [21] for each because there are 21 steps [0, 20] (from 0%, 5%, 10%... to 100%) */
+unsigned char array_dacdds[6][21] =
+{
+	/*{ARRAY_DACDDS},*/{255,127,43,47,43,47,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43},
+	/*{ARRAY_DACDDS},*/{255,127,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43},
+	/*{ARRAY_DACDDS},*/{255,127,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43},
+	/*{ARRAY_DACDDS},*/{255,127,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43},
+	{ARRAY_DACDDS},
+	{ARRAY_DACDDS}
+};
+unsigned char array_level[6][21] =
+{
+	/*{ARRAY_LEVEL},*/{255,255,225,223,222,220,219,218,216,215,212,211,210,208,203,197,195,189,185,187,192},
+	/*{ARRAY_LEVEL},*/{255,255,213,212,211,210,209,208,206,204,202,201,200,198,196,194,189,185,182,187,192},
+	/*{ARRAY_LEVEL},*/{255,255,229,228,227,226,225,224,222,220,218,216,214,211,209,206,203,200,197,194,191},
+	/*{ARRAY_LEVEL},*/{255,255,223,221,219,218,216,215,214,213,211,210,209,207,206,204,203,202,200,199,197},
+	{ARRAY_LEVEL},
+	{ARRAY_LEVEL}
+};
 
-unsigned char array_knowns_3mhz_facial[21] = {0};
-unsigned char array_refdacdds_3mhz_facial[21] = {ARRAY_REFDACDDS};
-unsigned char array_dacdds_3mhz_facial[21] = {ARRAY_DACDDS};
-unsigned char array_level_3mhz_facial[21] = {ARRAY_LEVEL};
-unsigned int array_lect_rf_3mhz_facial[21] = {0};
-float array_anrf_3mhz_facial[21] = {ARRAY_ANRF_1MHZ_CORPORAL};
+const float array_anrf_1mhz_facial[21] = {ARRAY_ANRF_1MHZ_FACIAL};
+const float array_anrf_3mhz_facial[21] = {ARRAY_ANRF_3MHZ_FACIAL};
+const float array_anrf_ba_facial[21] = {0.0f};
+const float array_anrf_1mhz_corporal[21] = {ARRAY_ANRF_1MHZ_CORPORAL};
+const float array_anrf_3mhz_corporal[21] = {ARRAY_ANRF_3MHZ_CORPORAL};
+const float array_anrf_ba_corporal[21] = {0.0f};
 
-unsigned char array_knowns_ba_facial[21] = {0};
-unsigned char array_refdacdds_ba_facial[21] = {ARRAY_REFDACDDS};
-unsigned char array_dacdds_ba_facial[21] = {ARRAY_DACDDS};
-unsigned char array_level_ba_facial[21] = {ARRAY_LEVEL};
-unsigned int array_lect_rf_ba_facial[21] = {0};
-float array_anrf_ba_facial[21] = {0.0f};
 
-unsigned char array_knowns_1mhz_corporal[21] = {0};
-unsigned char array_refdacdds_1mhz_corporal[21] = {ARRAY_REFDACDDS};
-unsigned char array_dacdds_1mhz_corporal[21] = {ARRAY_DACDDS};
-unsigned char array_level_1mhz_corporal[21] = {ARRAY_LEVEL};
-unsigned int array_lect_rf_1mhz_corporal[21] = {0};
-float array_anrf_1mhz_corporal[21] = {ARRAY_ANRF_3MHZ_FACIAL};
-
-unsigned char array_knowns_3mhz_corporal[21] = {0};
-unsigned char array_refdacdds_3mhz_corporal[21] = {ARRAY_REFDACDDS};
-unsigned char array_dacdds_3mhz_corporal[21] = {ARRAY_DACDDS};
-unsigned char array_level_3mhz_corporal[21] = {ARRAY_LEVEL};
-unsigned int array_lect_rf_3mhz_corporal[21] = {0};
-float array_anrf_3mhz_corporal[21] = {ARRAY_ANRF_3MHZ_CORPORAL};
-
-unsigned char array_knowns_ba_corporal[21] = {0};
-unsigned char array_refdacdds_ba_corporal[21] = {ARRAY_REFDACDDS};
-unsigned char array_dacdds_ba_corporal[21] = {ARRAY_DACDDS};
-unsigned char array_level_ba_corporal[21] = {ARRAY_LEVEL};
-unsigned int array_lect_rf_ba_corporal[21] = {0};
-float array_anrf_ba_corporal[21] = {0.0f};
 
 unsigned char handle_value = 0xFF;
 volatile rf_frequencies_t freq_value = RF_freq_undef;
@@ -571,60 +565,36 @@ void calibration_process(unsigned char input)
 				{
 					if(freq_value == RF_freq_1mhz)
 					{
-						array_dacdds_1mhz_corporal[index_percentage_value] = dacdds_value;
-						array_refdacdds_1mhz_corporal[index_percentage_value] = refdacdds_value;
-						array_level_1mhz_corporal[index_percentage_value] = level_value;
-						array_lect_rf_1mhz_corporal[index_percentage_value] = Lectura_RF();
-						// array_anrf_1mhz_corporal[index_percentage_value] = read_voltage_anrf_1mhz(array_lect_rf_1mhz_corporal[index_percentage_value]);
-						array_knowns_1mhz_corporal[index_percentage_value] = 1;
+						array_dacdds[RF_arrays_1mhz_corporal][index_percentage_value] = dacdds_value;
+						array_level[RF_arrays_1mhz_corporal][index_percentage_value] = level_value;
 					}
 					else if(freq_value == RF_freq_3mhz)
 					{
-						array_dacdds_3mhz_corporal[index_percentage_value] = dacdds_value;
-						array_refdacdds_3mhz_corporal[index_percentage_value] = refdacdds_value;
-						array_level_3mhz_corporal[index_percentage_value] = level_value;
-						array_lect_rf_3mhz_corporal[index_percentage_value] = Lectura_RF();
-						// array_anrf_3mhz_corporal[index_percentage_value] = read_voltage_anrf_3mhz(array_lect_rf_3mhz_corporal[index_percentage_value]);
-						array_knowns_3mhz_corporal[index_percentage_value] = 1;
+						array_dacdds[RF_arrays_3mhz_corporal][index_percentage_value] = dacdds_value;
+						array_level[RF_arrays_3mhz_corporal][index_percentage_value] = level_value;
 					}
 					else if (freq_value == RF_freq_sweep)
 					{
-						array_dacdds_ba_corporal[index_percentage_value] = dacdds_value;
-						array_refdacdds_ba_corporal[index_percentage_value] = refdacdds_value;
-						array_level_ba_corporal[index_percentage_value] = level_value;
-						array_lect_rf_ba_corporal[index_percentage_value] = Lectura_RF();
-						// array_anrf_ba_corporal[index_percentage_value] = read_voltage_anrf(array_lect_rf_ba_corporal[index_percentage_value]);
-						array_knowns_ba_corporal[index_percentage_value] = 1;
+						array_dacdds[RF_arrays_ba_corporal][index_percentage_value] = dacdds_value;
+						array_level[RF_arrays_ba_corporal][index_percentage_value] = level_value;
 					}
 				}
 				else if (handle_value == ESPE || handle_value == FACIAL)
 				{
 					if(freq_value == RF_freq_1mhz)
 					{
-						array_dacdds_1mhz_facial[index_percentage_value] = dacdds_value;
-						array_refdacdds_1mhz_facial[index_percentage_value] = refdacdds_value;
-						array_level_1mhz_facial[index_percentage_value] = level_value;
-						array_lect_rf_1mhz_facial[index_percentage_value] = Lectura_RF();
-						// array_anrf_1mhz_facial[index_percentage_value] = read_voltage_anrf_1mhz(array_lect_rf_1mhz_facial[index_percentage_value]);
-						array_knowns_1mhz_facial[index_percentage_value] = 1;
+						array_dacdds[RF_arrays_1mhz_facial][index_percentage_value] = dacdds_value;
+						array_level[RF_arrays_1mhz_facial][index_percentage_value] = level_value;
 					}
 					else if(freq_value == RF_freq_3mhz)
 					{
-						array_dacdds_3mhz_facial[index_percentage_value] = dacdds_value;
-						array_refdacdds_3mhz_facial[index_percentage_value] = refdacdds_value;
-						array_level_3mhz_facial[index_percentage_value] = level_value;
-						array_lect_rf_3mhz_facial[index_percentage_value] = Lectura_RF();
-						// array_anrf_3mhz_facial[index_percentage_value] = read_voltage_anrf_3mhz(array_lect_rf_3mhz_facial[index_percentage_value]);
-						array_knowns_3mhz_facial[index_percentage_value] = 1;
+						array_dacdds[RF_arrays_3mhz_facial][index_percentage_value] = dacdds_value;
+						array_level[RF_arrays_3mhz_facial][index_percentage_value] = level_value;
 					}
 					else if (freq_value == RF_freq_sweep)
 					{
-						array_dacdds_ba_facial[index_percentage_value] = dacdds_value;
-						array_refdacdds_ba_facial[index_percentage_value] = refdacdds_value;
-						array_level_ba_facial[index_percentage_value] = level_value;
-						array_lect_rf_ba_facial[index_percentage_value] = Lectura_RF();
-						// array_anrf_ba_facial[index_percentage_value] = read_voltage_anrf(array_lect_rf_ba_facial[index_percentage_value]);
-						array_knowns_ba_facial[index_percentage_value] = 1;
+						array_dacdds[RF_arrays_ba_facial][index_percentage_value] = dacdds_value;
+						array_level[RF_arrays_ba_facial][index_percentage_value] = level_value;
 					}
 				}
 			}
@@ -794,8 +764,35 @@ void calibration_process(unsigned char input)
 			Nop();
 		break;
 		case CALIBRATION_ALL_VALUES_FOUND_FOR_SERIES:
-			/* TODO: shut down RF to note operator you have found all values */
-			calibration_status = CALIBRATION_STOP_RF;
+			if(freq_value == RF_freq_3mhz && handle_value == CORPORAL)
+			{
+				freq_value = RF_freq_3mhz;
+				handle_value = FACIAL;
+				Set_Freq_AD9834(freq_value*100000);	// Pongo frecuencia.
+				index_percentage_value = RF_value_100;
+				calibration_status = CALIBRATION_START_SEARCH;
+			}
+			else if(freq_value == RF_freq_3mhz && handle_value == FACIAL)
+			{
+				freq_value = RF_freq_1mhz;
+				handle_value = CORPORAL;
+				Set_Freq_AD9834(freq_value*100000);	// Pongo frecuencia.
+				index_percentage_value = RF_value_100;
+				calibration_status = CALIBRATION_START_SEARCH;
+			}
+			else if(freq_value == RF_freq_1mhz && handle_value == CORPORAL)
+			{
+				freq_value = RF_freq_1mhz;
+				handle_value = FACIAL;
+				Set_Freq_AD9834(freq_value*100000);	// Pongo frecuencia.
+				index_percentage_value = RF_value_100;
+				calibration_status = CALIBRATION_START_SEARCH;
+			}
+			else if(freq_value == RF_freq_1mhz && handle_value == FACIAL)
+			{
+				calibration_status = CALIBRATION_STOP_RF;
+			}
+
 		break;
 		case CALIBRATION_STOP_RF:
 			Apaga_RF();
@@ -1358,17 +1355,23 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 				if (F_RF == 10)
 				{
 					// Carga_TLC5620(REFDACDDS | Ajust_RefDacDDS,3);	// 1 MHz
-					Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 1 MHz
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
+					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_1mhz_corporal][V_RF], 3);
+					Carga_TLC5620(LEVEL | array_level[RF_arrays_1mhz_corporal][V_RF], 1);
 				}
 				if (F_RF == 30)
 				{
 					// Carga_TLC5620(REFDACDDS | Ajust_RefDacDDS,3);	// 3 MHz
-					Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 3 MHz
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 3 MHz
+					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_3mhz_corporal][V_RF], 3);
+					Carga_TLC5620(LEVEL | array_level[RF_arrays_3mhz_corporal][V_RF], 1);
 				}
 				if (F_RF == 0xBA)
 				{
 					// Carga_TLC5620(REFDACDDS | 119,3);	// Barrido
-					Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// Barrido
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// Barrido
+					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_ba_corporal][V_RF], 3);
+					Carga_TLC5620(LEVEL | array_level[RF_arrays_ba_corporal][V_RF], 1);
 				}
 				// if (V_RF == 0)
 				// {
@@ -1385,19 +1388,23 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 				{
 					// Carga_TLC5620(REFDACDDS | 195,3);	// 1 MHz
 					// Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 1 MHz
-					Carga_TLC5620(REFDACDDS | array_refdacdds_1mhz_facial[V_RF],3);	// 1 MHz
-					Carga_TLC5620(DACDDS | array_dacdds_1mhz_facial[V_RF],3);
-					Carga_TLC5620(LEVEL | array_level_1mhz_facial[V_RF],1);
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
+					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_1mhz_facial][V_RF], 3);
+					Carga_TLC5620(LEVEL | array_level[RF_arrays_1mhz_facial][V_RF], 1);
 				}
 				if (F_RF == 30)
 				{
 					// Carga_TLC5620(REFDACDDS | 195,3);	// 3 MHz
-					// Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 3 MHz
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
+					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_3mhz_facial][V_RF], 3);
+					Carga_TLC5620(LEVEL | array_level[RF_arrays_3mhz_facial][V_RF], 1);
 				}
 				if (F_RF == 0xBA)
 				{
 					// Carga_TLC5620(REFDACDDS | 195,3);	// Barrido
-					Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// Barrido
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
+					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_ba_facial][V_RF], 3);
+					Carga_TLC5620(LEVEL | array_level[RF_arrays_ba_facial][V_RF], 1);
 				}
 				// if (V_RF == 0)
 				// {

@@ -152,6 +152,8 @@ extern unsigned char refdacdds_value;
 extern unsigned char index_percentage_value;
 extern calibration_process_t calibration_status;
 extern unsigned char ReceivedDataBuffer[64] RX_DATA_BUFFER_ADDRESS;
+extern unsigned char array_dacdds[6][21];
+extern unsigned char array_level[6][21];
 extern unsigned char last_rf_value;
 
 #ifdef DEBUG_MARKO
