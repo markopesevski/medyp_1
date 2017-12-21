@@ -58,12 +58,15 @@ typedef enum
 	CALIBRATION_RF_RUNNING,
 	CALIBRATION_START_SEARCH,
 	CALIBRATION_SEARCHING_VALUE,
+	CALIBRATION_CHECKING_VALUE,
 	CALIBRATION_WAITING_ANRF_FALL_DOWN,
 	CALIBRATION_FOUND_VALUE,
 	CALIBRATION_VALUE_NOT_REACHABLE,
 	CALIBRATION_SAVE_VALUES,
 	CALIBRATION_ALL_VALUES_FOUND_FOR_SERIES,
+	CALIBRATION_RF_READ_VOLTAGE,
 	CALIBRATION_STOP_RF,
+	CALIBRATION_WAITING_WARMUP,
 	CALIBRATION_NO_STATE
 } calibration_process_t;
 
@@ -111,6 +114,14 @@ typedef enum
 	RF_calibrate = 21
 } rf_values_t;
 
+typedef enum
+{
+	RF_freq_1mhz = 10,
+	RF_freq_3mhz = 30,
+	RF_freq_sweep = 0xBA,
+	RF_freq_undef = 0x00 /* using 0 instead of 0xFF because it seems safer for the DDS signal generator */
+} rf_frequencies_t;
+
 #define DEBUGAR
 
 // System command
@@ -119,11 +130,14 @@ typedef enum
 #define	GetPeripheralClock()	(SYS_FREQ/(1 << OSCCONbits.PBDIV))
 #define GetInstructionClock()	(SYS_FREQ)
 
-///* ORIGINAL */ #define T1_TICK					62500		// Tick general -> 	1tick = 50ms 	(a 80MHz).
-#define T1_TICK					1250		// Tick general -> 	1tick = 1ms 	(a 80MHz).
+#ifndef DEBUG_MARKO
+	// /* ORIGINAL */ #define T1_TICK					62500		// Tick general -> 	1tick = 50ms 	(a 80MHz).
+	#define T1_TICK					6250		// Tick general -> 	1tick = 5ms 	(a 80MHz).
+#else // DEBUG_MARKO
+	#define T1_TICK					1250		// Tick general -> 	1tick = 1ms 	(a 80MHz).
+#endif // DEBUG_MARKO
 #define T3_TICK					3125		// Tick galva -> 	1tick = 10ms 	(a 80MHz).
-///* ORIGINAL */ #define T4_TICK					62500		// Tick barrido ->	1tick = 50ms 	(a 80MHz).
-#define T4_TICK					12500		// Tick barrido ->	1tick = 10ms 	(a 80MHz).
+#define T4_TICK					62500		// Tick barrido ->	1tick = 50ms 	(a 80MHz).
 #define T5_TICK					125			// Tick electrolif->1tick = 25us 	(a 80MHz).
 
 // Valores predeterminados programa.
@@ -141,32 +155,28 @@ typedef enum
 #define IN					0
 #define OUT					1
 
-#define FACIAL				1	// Aplicador facial.
-#define ESPE				2	// Aplicador específico.
-#define CORPORAL			3	// Aplicador corporal.
+#define FACIAL				1 // Aplicador facial.
+#define ESPE				2 // Aplicador específico.
+#define CORPORAL			3 // Aplicador corporal.
 
 #define PROBE1				1
 #define PROBE2				2
 #define PROBE3				3
 
 #define TEMPERATURA_HS		30
-/* WIP */
-/* UNCOMMENT WHEN DONE */
-// #define TEMPERATURA_ALARMA	90	// A esta temperatura se para la RF.
-/* ERASE WHEN DONE */
-#define TEMPERATURA_ALARMA	1	// A esta temperatura se para la RF.
-/* WIP */
-#define SEGS_HS				60	// 1 minuto.
-#define VOL_FAB				0//1//5 TODO
+#define TEMPERATURA_ALARMA	90 // A esta temperatura se para la RF.
 
-#define DAC_GAL_FAB			56//150	2.10.17 Se rebaja máxima corriente a 1.5mA
+#define SEGS_HS				60 // 1 minuto.
+#define VOL_FAB				0 //1//5 TODO
+
+#define DAC_GAL_FAB			56 //150	2.10.17 Se rebaja máxima corriente a 1.5mA
 #define DAC_STIM_FAB		110
-#define DAC_RF_FAB			114//195//200
-#define DAC_BIAS_FAB		82	// Con 82 hay 1.41V en DACBIAS (R153)
+#define DAC_RF_FAB			114 //195//200
+#define DAC_BIAS_FAB		82 // Con 82 hay 1.41V en DACBIAS (R153)
 
 
 
-#define TIEMPO_REDUCIR		10	// Tiempo seguido sin detectar conducción para reducir RF. (0,2s x 10 = 2s)
+#define TIEMPO_REDUCIR		10 // Tiempo seguido sin detectar conducción para reducir RF. (0,2s x 10 = 2s)
 
 // Órdenes
 #define TRAMA_STATUS		2
@@ -200,20 +210,20 @@ typedef enum
 #define RST_FAB				88
 
 // Valores predeterminados para TLV5620
-#define REFDAC				0x100	// Selecciona salida A del dac.
-#define DACGAL				0x300	// Selecciona salida B del dac.
-#define SOUND				0x500	// Selecciona salida C del dac.
-#define LEVEL				0x700	// Selecciona salida D del dac. 0x700 -Las salidas están x 2 (RNG = 1).
+#define REFDAC				0x100 // Selecciona salida A del dac.
+#define DACGAL				0x300 // Selecciona salida B del dac.
+#define SOUND				0x500 // Selecciona salida C del dac.
+#define LEVEL				0x700 // Selecciona salida D del dac. 0x700 -Las salidas están x 2 (RNG = 1).
 
-#define REFDACA				0x100	// Selecciona salida A del dac.
-#define DACA				0x300	// Selecciona salida B del dac.
-#define REFDACB				0x500	// Selecciona salida C del dac.
-#define DACB				0x700	// Selecciona salida D del dac.
+#define REFDACA				0x100 // Selecciona salida A del dac.
+#define DACA				0x300 // Selecciona salida B del dac.
+#define REFDACB				0x500 // Selecciona salida C del dac.
+#define DACB				0x700 // Selecciona salida D del dac.
 
-#define REFDACDDS			0x100	// Selecciona salida A del dac.
-#define DACDDS				0x300	// Selecciona salida B del dac.
-#define REFDACBIAS			0x500	// Selecciona salida C del dac.
-#define DACBIAS				0x700	// Selecciona salida D del dac.
+#define REFDACDDS			0x100 // Selecciona salida A del dac.
+#define DACDDS				0x300 // Selecciona salida B del dac.
+#define REFDACBIAS			0x500 // Selecciona salida C del dac.
+#define DACBIAS				0x700 // Selecciona salida D del dac.
 
 // Valores predeterminados NVM.
 #define NVM_PROGRAM_PAGE 	0xBD01F000		// MIRAR BIEN DONDE ESCRIBO (en el .map)

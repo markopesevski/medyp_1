@@ -68,11 +68,6 @@ unsigned char level_value = 0xFF;
 unsigned char index_percentage_value = 0xFF;
 calibration_process_t calibration_status = CALIBRATION_NO_STATE;
 
-unsigned char Suma_Envio_G = 0;
-unsigned char Cont_Envio_G = 0;
-unsigned char count_messages = 0;
-unsigned char send_message = 0;
-
 extern float voltage_anrf;
 
 
@@ -471,8 +466,6 @@ void Procesar_Ordenes(unsigned char Ordre)
 float voltage = 0.0f;
 void calibration_process(unsigned char input)
 {
-	unsigned char counter = 0;
-	float pas_anrf_entre_indexs = 0.0f;
 	switch((calibration_process_t)input)
 	{
 		case CALIBRATION_SAVE_SERIAL:
@@ -484,14 +477,20 @@ void calibration_process(unsigned char input)
 			{
 				handle_value = CORPORAL;
 			}
-			if (((ReceivedDataBuffer[3] - 0x30)*100 + (ReceivedDataBuffer[4] - 0x30)*10 + (ReceivedDataBuffer[5] - 0x30)) == 10
-				|| (ReceivedDataBuffer[3] - 0x30)*100 + (ReceivedDataBuffer[4] - 0x30)*10 + (ReceivedDataBuffer[5] - 0x30) == 30
-				|| (ReceivedDataBuffer[3] - 0x30)*100 + (ReceivedDataBuffer[4] - 0x30)*10 + (ReceivedDataBuffer[5] - 0x30) == 0xBA)
+			if (((ReceivedDataBuffer[3] - 0x30)*100 + (ReceivedDataBuffer[4] - 0x30)*10 + (ReceivedDataBuffer[5] - 0x30)) == 10)
 			{
-				freq_value = (ReceivedDataBuffer[3] - 0x30)*100 + (ReceivedDataBuffer[4] - 0x30)*10 + (ReceivedDataBuffer[5] - 0x30);
+				freq_value = RF_freq_1mhz;
+			}
+			else if ((ReceivedDataBuffer[3] - 0x30)*100 + (ReceivedDataBuffer[4] - 0x30)*10 + (ReceivedDataBuffer[5] - 0x30) == 30)
+			{
+				freq_value = RF_freq_3mhz;
+			}
+			else if ((ReceivedDataBuffer[3] - 0x30)*100 + (ReceivedDataBuffer[4] - 0x30)*10 + (ReceivedDataBuffer[5] - 0x30) == 0xBA)
+			{
+				freq_value = RF_freq_sweep;
 			}
 			// handle_value = FACIAL;
-			// freq_value = 10;
+			// freq_value = RF_freq_1mhz;
 		break;
 		case CALIBRATION_SAVE_VALUES:
 		case CALIBRATION_READ_TEMP:

@@ -55,13 +55,22 @@
 
 /********************* Declaración de variables *********************/
 /* Variables generales */
-volatile unsigned char tick_Led = 0;			// Tick led run.
-volatile unsigned char tick_Timeout = 0;		// Tick timeout coms.
-volatile unsigned int  tickCambio = 0;			// Tick para cambio de polaridad de galvánica.
-volatile unsigned char tick_T4 = 0;				// Tick para barrido.
-volatile unsigned char tick_Galva = 0;			// Tick para lectura galvánica.
-volatile unsigned char tick_Manac = 0;			// Tick para lectura aplicadores.
-volatile unsigned int  tick_Tecla = 0;			// Tick para lectura tecla.
+volatile unsigned int tick_Led = 0;			// Tick led run.
+volatile unsigned int tick_Timeout = 0;		// Tick timeout coms.
+volatile unsigned int tickCambio = 0;		// Tick para cambio de polaridad de galvánica.
+volatile unsigned int tick_T4 = 0;			// Tick para barrido.
+volatile unsigned int tick_Galva = 0;		// Tick para lectura galvánica.
+volatile unsigned int tick_Manac = 0;		// Tick para lectura aplicadores.
+volatile unsigned int tick_Tecla = 0;		// Tick para lectura tecla.
+
+volatile unsigned int tick_pushbutton_calibra = 0; // Tick para intermitencias pushbutton cuando estoy en calibración.
+volatile unsigned int tick_calibra = 0; // Tick para medidas y pasos cuando estoy en calibración.
+volatile unsigned int tick_warmup = 0; // Tick para esperar warmup de la máquina cuando estoy en calibración.
+// #define DEBUG_MARKO
+#ifdef DEBUG_MARKO
+	volatile unsigned int tick_level = 0; // Debug ticks, generally not used
+	volatile unsigned int tick_mitjana = 0; // Debug ticks, generally not used
+#endif // DEBUG_MARKO
 
 volatile unsigned int  Contador_Stim = 0;		// Contador para generar los pulsos en interrupción.
 volatile unsigned int  Contador_Tim = 0;		// Contador para generar los pulsos en interrupción.
@@ -134,18 +143,8 @@ unsigned char Cont_Reducir = 0;
 
 
 
-#define VALOR_INICIAL_LEVEL 200 //180
-#define VALOR_REFDACDDS 200
-volatile static float tensio_fora[256] = {0.0f};
-static unsigned int refdacdds_values[] = {97,100,103,106,109,111,114,117,120};
-static unsigned int refdacdds_results[] = {0,0,0,0,0,0,0,0,0};
-static unsigned int ticks_reading_rf = 0;
-static unsigned int index = 0;
-static float accumulator = 0.0f;
-static unsigned char tick_pushbutton_calibra = 0;
-static unsigned char tick_calibra = 0;
 float voltage_anrf = 0.0f;
-extern unsigned char freq_value;
+extern rf_frequencies_t freq_value;
 extern unsigned char handle_value;
 extern unsigned char dacdds_value;
 extern unsigned char level_value;
@@ -156,17 +155,19 @@ extern unsigned char ReceivedDataBuffer[64] RX_DATA_BUFFER_ADDRESS;
 calibration_values_t calibration_search_result = CALIBRATION_VALUE_UNDER;
 extern unsigned char last_rf_value;
 
-static unsigned int mostres[256] = {0};
-static unsigned int comptador_level = 0;
-volatile static unsigned int tick_level = 0;
-volatile static unsigned int tick_mitjana = 0;
-static unsigned char stop = 1;
-static unsigned char freq = 1;
-static unsigned char barrido = 0;
-static unsigned char pujar = 0;
-static unsigned char baixar = 0;
-static unsigned char bias_value = 82;
-static float temperatura = 0.0f;
+#ifdef DEBUG_MARKO
+	static float tensio_fora[256] = {0.0f};
+	static float accumulator = 0.0f;
+	static unsigned int mostres[256] = {0};
+	static unsigned int comptador_level = 0;
+	static unsigned char stop = 1;
+	static unsigned char freq = 1;
+	static unsigned char barrido = 0;
+	static unsigned char pujar = 0;
+	static unsigned char baixar = 0;
+	static unsigned char bias_value = 82;
+	static float temperatura = 0.0f;
+#endif // DEBUG_MARKO
 
 
 
@@ -269,130 +270,133 @@ union unio_led Led;
  ** Description:	PROGRAMA PRINCIPAL.								**
  *********************************************************************
  *********************************************************************/
- int main(void)
-{
-	Config_System();
-	Config_Ports();
-	Init_Regs();
-
-	Config_Timer1();	// Timer general.
-	Config_Timer4();
-	HS_FAN = 1;				// Enciendo ventilador radiador.
-	Rele.Bit.Rel1 = 1;
-	Rele.Bit.Rel2 = 1;
-	Rele.Bit.Rel3 = 1;
-	Control_TPIC();
-
-	Carga_TLC5620(REFDACBIAS | 200, 3); /* SAFE VALUE <- CRUCIAL */
-	Carga_TLC5620(DACBIAS | bias_value, 3); /* original 82 SAFE VALUE <- CRUCIAL */
-	Carga_TLC5620(REFDACDDS | 127, 3); /* SAFE VALUE */
-	Carga_TLC5620(DACDDS | 127, 3); /* SAFE VALUE */
-	Carga_TLC5620(LEVEL | 255, 1); /* SAFE VALUE <- CRUCIAL */
-
-	while(1)
+#ifdef DEBUG_MARKO
+	int main(void)
 	{
-		/* 500 ms */
-		if(stop == 2)
+		Config_System();
+		Config_Ports();
+		Init_Regs();
+
+		Config_Timer1();	// Timer general.
+		Config_Timer4();
+		HS_FAN = 1;				// Enciendo ventilador radiador.
+		Rele.Bit.Rel1 = 1;
+		Rele.Bit.Rel2 = 1;
+		Rele.Bit.Rel3 = 1;
+		Control_TPIC();
+
+		Carga_TLC5620(REFDACBIAS | 200, 3); /* SAFE VALUE <- CRUCIAL */
+		Carga_TLC5620(DACBIAS | bias_value, 3); /* original 82 SAFE VALUE <- CRUCIAL */
+		Carga_TLC5620(REFDACDDS | 127, 3); /* SAFE VALUE */
+		Carga_TLC5620(DACDDS | 127, 3); /* SAFE VALUE */
+		Carga_TLC5620(LEVEL | 255, 1); /* SAFE VALUE <- CRUCIAL */
+
+		while(1)
 		{
 			/* 500 ms */
-			if(tick_level >= 500)
+			if(stop == 2)
 			{
-				tick_level = 0;
-				if(pujar == 1)
+				/* 500 ms */
+				if(tick_level >= 500)
 				{
-					comptador_level++;
-					if(comptador_level >= 60)
+					tick_level = 0;
+					if(pujar == 1)
 					{
-						comptador_level = 0;
+						comptador_level++;
+						if(comptador_level >= 60)
+						{
+							comptador_level = 0;
+						}
+					}
+					else if(baixar == 1)
+					{
+						comptador_level--;
+						if(comptador_level == 0)
+						{
+							comptador_level = 60;
+						}
+					}
+					tensio_fora[comptador_level] = (accumulator/500.0f);
+					tensio_fora[comptador_level] = ((0.1237 * tensio_fora[comptador_level]) + 13.133); //0,1237x + 13,133
+					accumulator = (0.0f);
+					Carga_TLC5620(LEVEL | (0xFF - comptador_level), 1);
+					Carga_TLC5620(DACBIAS | bias_value, 3);
+				}
+
+				/* 1 ms -> 500 samples */
+				if(tick_Led >= 1)
+				{
+					mostres[0] = Lectura_RF();
+					accumulator += Lectura_RF();
+					temperatura = Lectura_Temp();
+					if(temperatura >= 90)
+					{
+						Led.Bit.LedPB = ~Led.Bit.LedPB;
+						Control_TPIC();
+					}
+					Nop();
+					tick_Led = 0;
+				}
+
+				if(barrido == 1)
+				{
+					if (Sem.Flag_Barrido == 1)
+					{
+						Sem.Flag_Barrido = 0;
+						if (Subiendo == 0)
+						{
+							Frecuencia_Barrido = Frecuencia_Barrido + 5;
+							if (Frecuencia_Barrido >= 300)
+							{
+								Subiendo = 1;
+							}
+						}
+						else
+						{
+							Frecuencia_Barrido = Frecuencia_Barrido - 5;
+							if (Frecuencia_Barrido <= 100)
+							{
+								Subiendo = 0;
+							}
+						}
+						Frecuencia_Resulta = Frecuencia_Barrido*10000;
+						Set_Freq_AD9834(Frecuencia_Resulta);
 					}
 				}
-				else if(baixar == 1)
-				{
-					comptador_level--;
-					if(comptador_level == 0)
-					{
-						comptador_level = 60;
-					}
-				}
-				tensio_fora[comptador_level] = (accumulator/500.0f);
-				tensio_fora[comptador_level] = (0.1237 * tensio_fora[comptador_level]) + 13.133; //0,1237x + 13,133
-				accumulator = 0.0f;
-				Carga_TLC5620(LEVEL | 0xFF - comptador_level, 1);
-				Carga_TLC5620(DACBIAS | bias_value, 3);	
 			}
 
-			/* 1 ms -> 500 samples */
-			if(tick_Led >= 1)
+			if(stop == 1)
 			{
-				mostres[0] = Lectura_RF();
-				accumulator += Lectura_RF();
-				temperatura = Lectura_Temp();
-				if(temperatura >= 90)
+				Suspend_AD9834();				// Pone a 0 el nivel del DDS.
+				if(barrido == 1)
 				{
-					Led.Bit.LedPB = ~Led.Bit.LedPB;
-					Control_TPIC();
-				}	
+					barrido = 0;
+					Stop_Timer4();
+				}
+				stop = 3;
+			}
+			else if (stop == 0)
+			{
+				if(barrido == 1)
+				{
+					Config_Timer4();
+				}
+				else
+				{
+					Set_Freq_AD9834(freq*1000000);	// Pongo frecuencia.
+				}
+				stop = 2;
+			}
+			else if (stop == 2 || stop == 3)
+			{
 				Nop();
-				tick_Led = 0;
 			}
-
-			if(barrido == 1)
-			{
-				if (Sem.Flag_Barrido == 1)
-				{
-					Sem.Flag_Barrido = 0;
-					if (Subiendo == 0)
-					{
-						Frecuencia_Barrido = Frecuencia_Barrido + 5;
-						if (Frecuencia_Barrido >= 300)
-						{
-							Subiendo = 1;
-						}
-					}
-					else
-					{
-						Frecuencia_Barrido = Frecuencia_Barrido - 5;
-						if (Frecuencia_Barrido <= 100)
-						{
-							Subiendo = 0;
-						}
-					}
-					Frecuencia_Resulta = Frecuencia_Barrido*10000;
-					Set_Freq_AD9834(Frecuencia_Resulta);
-				}
-			}
-		}
-
-		if(stop == 1)
-		{
-			Suspend_AD9834();				// Pone a 0 el nivel del DDS.
-			if(barrido == 1)
-			{
-				barrido = 0;
-				Stop_Timer4();
-			}
-			stop = 3;
-		}
-		else if (stop == 0)
-		{
-			if(barrido == 1)
-			{
-				Config_Timer4();
-			}
-			else
-			{
-				Set_Freq_AD9834(freq*1000000);	// Pongo frecuencia.
-			}
-			stop = 2;
-		}
-		else if (stop == 2 || stop == 3)
-		{
-			Nop();
 		}
 	}
-}
+#endif // DEBUG_MARKO
 
-int orig_main(void)
+#ifndef DEBUG_MARKO
+int main(void)
 {
 	Config_System();
 	Config_Ports();
@@ -483,103 +487,26 @@ int orig_main(void)
 			}
 		}
 
-		/* since it is timed with the TIM1, and 50ms period, every 100 ms: */
-		if(tick_pushbutton_calibra >= 2 && Estoy_Test == CALIBRA_RF)
+		if(Estoy_Test == CALIBRA_RF)
 		{
-			tick_pushbutton_calibra = 0;
-			Led.Bit.LedPB = ~Led.Bit.LedPB;
-			Control_TPIC();
-		}
-		/* since it is timed with the TIM1, and 50ms period, every 50 ms: */
-		if(tick_calibra >= 5 && Estoy_Test == CALIBRA_RF)
-		{
-			tick_calibra = 0;
-			// if(!HIDRxHandleBusy(USBOutHandle))
-			// {
-			// 	Limpia_Buffer(IN);
-			// 	// Re-arm the OUT endpoint, so we can receive the next OUT data packet that the host may try to send us.
-			// 	USBOutHandle = HIDRxPacket(HID_EP, (BYTE*)&ReceivedDataBuffer, 64);
-			// }
-			calibration_process(calibration_status);
-			if(calibration_status == CALIBRATION_STARTING_RF)
+			/* since it is timed with the TIM1, and 50ms period, every 100 ms: */
+			if(tick_pushbutton_calibra >= 2)
 			{
-				Aplicador = handle_value;
-				Mirar_Aplicador();
-				Activar_Salida();
+				tick_pushbutton_calibra = 0;
+				Led.Bit.LedPB = ~Led.Bit.LedPB;
 				Control_TPIC();
-				Estado_Maquina = ACTIVE;
-				// Estado_RF = O_N;
-				Valor_RF = RF_value_50;
-				Frecuencia = freq_value;
-				Enciende_RF(10, freq_value);
-				HS_FAN = 1;				// Enciendo ventilador radiador.
-				Nop();
-				calibration_status = CALIBRATION_RF_RUNNING;
 			}
-			else if (calibration_status == CALIBRATION_RF_RUNNING)
-			{
-				Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
-				Carga_TLC5620(DACDDS | dacdds_value, 3);
-				Carga_TLC5620(LEVEL | level_value, 1);
-				if(freq_value == 10)
-				{
-					voltage_anrf = read_voltage_anrf_1mhz(Lectura_RF());
-				}
-				else if(freq_value == 30)	
-				{
-					voltage_anrf = read_voltage_anrf_3mhz(Lectura_RF());
-				}	
-			}
-			else if (calibration_status == CALIBRATION_SEARCHING_VALUE)
-			{
-				Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
-				Carga_TLC5620(DACDDS | dacdds_value, 3);
-				Carga_TLC5620(LEVEL | level_value, 1);
 
-				if(freq_value == 10)
-				{
-					voltage_anrf = read_voltage_anrf_1mhz(Lectura_RF());
-				}
-				else if(freq_value == 30)	
-				{
-					voltage_anrf = read_voltage_anrf_3mhz(Lectura_RF());
-				}	
-				calibration_search_result = (calibration_values_t) is_voltage_correct(voltage_anrf, index_percentage_value, handle_value, freq_value);
-				if(dacdds_value == DACDDS_MIN && calibration_search_result == CALIBRATION_VALUE_UNDER)
-				{
-					/* acceleration because if at max power (DACDDS_MIN) at that LEVEL we already are under desired, means we can fastly increment LEVEL */
-					dacdds_value = DACDDS_MAX;
-				}
-				else if(calibration_search_result == CALIBRATION_VALUE_OK)
-				{
-					/* found value was OK */
-					calibration_status = CALIBRATION_FOUND_VALUE;
-				}
-				else
-				{
-					/* value was not correct */
-					calibration_status = CALIBRATION_SEARCHING_VALUE;
-				}
-			}
-			else if(calibration_status == CALIBRATION_WAITING_ANRF_FALL_DOWN)
+			/* since it is timed with the TIM1, and 50ms period, every 50 ms: */
+			if(tick_calibra > 0)
 			{
-				Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
-				Carga_TLC5620(DACDDS | dacdds_value, 3);
-				Carga_TLC5620(LEVEL | level_value, 1);
-				
-				if(freq_value == 10)
+				if(tick_calibra > 10)
 				{
-					voltage_anrf = read_voltage_anrf_1mhz(Lectura_RF());
+					tick_warmup++;
+					tick_calibra = 0;
+					calibration_process(calibration_status);
 				}
-				else if(freq_value == 30)
-				{
-					voltage_anrf = read_voltage_anrf_3mhz(Lectura_RF());
-				}	
-			}
-			else if(calibration_status == CALIBRATION_VALUE_NOT_REACHABLE)
-			{
-				/* TODO: what happens in this case? just a breakpoint for now */
-				Nop();
+				calibration_process(CALIBRATION_RF_READ_VOLTAGE);
 			}
 		}
 
@@ -833,7 +760,7 @@ int orig_main(void)
 				}
 				else
 				{
-					if (tick_Tecla >= 20)	// 1 segundo.
+					if (tick_Tecla >= 200)	// 1 segundo.
 					{
 						if (Mi_Estado_Maquina == STANDBY)
 						{
@@ -844,7 +771,7 @@ int orig_main(void)
 							Standby = 0;
 						}
 					}
-					if (tick_Tecla >= 40)
+					if (tick_Tecla >= 400)
 					{
 						Blink_PB = 3;
 					}
@@ -880,6 +807,7 @@ int orig_main(void)
 		}
 	}//End while
 }//End Main
+#endif //#ifndef DEBUG_MARKO
 
 /********************************************************************
  * Function:	Config_System()										*
@@ -1168,6 +1096,13 @@ void Config_Timer1(void)
 	tick_Timeout = 0;		// Inicio contador timeout coms.
 	tick_Manac = 0;			// Inicio contador lectura aplicadores.
 	tick_Tecla = 0;			// Inicio contador lectura tecla.
+	#ifdef DEBUG_MARKO
+		tick_level = 0;
+		tick_mitjana = 0;
+	#endif // DEBUG_MARKO
+	tick_pushbutton_calibra = 0;
+	tick_calibra = 0;
+	Sem_Lect_RF = 0;
 
 	// Timer 1 configurado para que produzca una interrupción cada 50 ms (Scheduler).
 	ConfigIntTimer1(T1_INT_ON | T1_INT_PRIOR_4);				// Enable Timer1 interrupt, interrupt priority 4.
@@ -1291,8 +1226,10 @@ void __ISR(_TIMER_1_VECTOR, ipl4) Timer1Handler(void)
 {
 	mT1ClearIntFlag();			// Clear the interrupt flag.
 
-	tick_level++;
-	tick_mitjana++;
+	#ifdef DEBUG_MARKO
+		tick_level++;
+		tick_mitjana++;
+	#endif // DEBUG_MARKO
 
 	if (Estoy_Test == CALIBRA_RF)
 	{
@@ -1300,8 +1237,12 @@ void __ISR(_TIMER_1_VECTOR, ipl4) Timer1Handler(void)
 		tick_calibra++;
 	}
 
+	/* WIP */
+	Sem_Lect_RF = 1; /* NEW */
+	/* WIP */
+
 	tick_Led++;
-	if (tick_Led >= 20)			// Blink de 1 seg. (se puede poner fuera con semáforo).
+	if (tick_Led >= 200)			// Blink de 1 seg. (se puede poner fuera con semáforo).
 	{
 		tick_Led = 0;
 		LED_RUN = ~LED_RUN; 	//todo VAAAA
@@ -1313,14 +1254,14 @@ void __ISR(_TIMER_1_VECTOR, ipl4) Timer1Handler(void)
 	}
 
 	tick_Manac++;
-	if (tick_Manac >= 4)		// Cada 200 ms.
+	if (tick_Manac >= 40)		// Cada 200 ms.
 	{
 		tick_Manac = 0;
 		Sem.Lect_Man = 1;
 	}
 
 	tick_Timeout++;
-	if (tick_Timeout >= 82)		// Si más de 4 seg sin comunicación -> timeout.//5? y mirar pitar?!?! TODO
+	if (tick_Timeout >= 820)		// Si más de 4 seg sin comunicación -> timeout.//5? y mirar pitar?!?! TODO
 	{
 		 tick_Timeout = 0;
 		 Sem.Time_out = 1;

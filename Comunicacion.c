@@ -44,7 +44,7 @@ extern unsigned char ToSendDataBuffer[64] TX_DATA_BUFFER_ADDRESS;
 extern USB_HANDLE USBOutHandle;	// USB handle.  Must be initialized to 0 at startup.
 extern USB_HANDLE USBInHandle;	// USB handle.  Must be initialized to 0 at startup.
 extern unsigned char Frecuencia;
-extern volatile unsigned char tick_Timeout;
+extern volatile unsigned int tick_Timeout;
 extern unsigned int Num_Serie;
 extern volatile unsigned char Pitar;
 extern unsigned char Retorno_Galva;
