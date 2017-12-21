@@ -602,50 +602,11 @@ void calibration_process(unsigned char input)
 			else
 			{
 				/* SEARCH FOR DACDDS AND LEVEL VALUES KNOWING DESIRED VOLTAGES */
-				index_percentage_value = RF_value_5;
-				calibration_status = CALIBRATION_START_SEARCH;
-				// if(handle_value == CORPORAL)
-				// {
-				// 	if(freq_value == 10)
-				// 	{
-				// 		/* only when you already know values 1 and 20 */
-				// 		if((array_knowns_1mhz_corporal[1] & array_knowns_1mhz_corporal[20]) == 1)
-				// 		{
-				// 			index_percentage_value = 2;
-				// 			calibration_status = CALIBRATION_START_SEARCH;
-				// 		}
-				// 	}
-				// 	else if(freq_value == 30)
-				// 	{
-				// 		/* only when you already know values 1 and 20 */
-				// 		if((array_knowns_3mhz_corporal[1] & array_knowns_3mhz_corporal[20]) == 1)
-				// 		{
-				// 			index_percentage_value = 2;
-				// 			calibration_status = CALIBRATION_START_SEARCH;
-				// 		}
-				// 	}
-				// }
-				// else if(handle_value == ESPE || handle_value == FACIAL)
-				// {
-				// 	if(freq_value == 10)
-				// 	{
-				// 		/* only when you already know values 1 and 20 */
-				// 		if((array_knowns_1mhz_facial[1] & array_knowns_1mhz_facial[20]) == 1)
-				// 		{
-				// 			index_percentage_value = 2;
-				// 			calibration_status = CALIBRATION_START_SEARCH;
-				// 		}
-				// 	}
-				// 	else if(freq_value == 30)
-				// 	{
-				// 		/* only when you already know values 1 and 20 */
-				// 		if((array_knowns_3mhz_facial[1] & array_knowns_3mhz_facial[20]) == 1)
-				// 		{
-				// 			index_percentage_value = 2;
-				// 			calibration_status = CALIBRATION_START_SEARCH;
-				// 		}
-				// 	}
-				// }
+				/* when searching ascending */
+				// index_percentage_value = RF_value_5;
+				/* when searching descending */
+				index_percentage_value = RF_value_100;
+				calibration_status = CALIBRATION_WAITING_WARMUP;
 			}
 		break;
 		case CALIBRATION_SET_GAL:
@@ -695,28 +656,67 @@ void calibration_process(unsigned char input)
 		case CALIBRATION_START_SEARCH:
 			refdacdds_value = REFDACDDS_VALUE;
 			dacdds_value = DACDDS_MIN;
-			level_value = LEVEL_MAX;
+			// /* ORIGINAL */ level_value = LEVEL_MAX;
+
+			/* when searching ascending */
+			// level_value = last_level_value + 5;
+
+			/* when searching descending */
+			level_value = last_level_value - 5;
+
+			Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
+			Carga_TLC5620(DACDDS | dacdds_value, 3);
+			Carga_TLC5620(LEVEL | level_value, 1);
+
 			calibration_status = CALIBRATION_SEARCHING_VALUE;
 		break;
 		case CALIBRATION_FOUND_VALUE:
-			calibration_process(CALIBRATION_SAVE_VALUES);
-			/* wrap around 20 to not overflow any array */
-			index_percentage_value++;
-			if(index_percentage_value == RF_calibrate)
+			/* count number of correct voltages before saving value for DACDDS and LEVEL */
+			if(value_correct_counter >= NUMBER_OF_CORRECT_VALUES_BEFORE_SAVING)
 			{
-				calibration_status = CALIBRATION_ALL_VALUES_FOUND_FOR_SERIES;
-				index_percentage_value = RF_calibrate; /* going to leave the value at RF_calibrate because this value is what operator should be seeing on screen */
+				value_correct_counter = 0;
+				calibration_process(CALIBRATION_SAVE_VALUES);
+
+				last_level_value = level_value;
+
+				/* wrap around 20 to not overflow any array */
+				/* when searching ascending */
+				// index_percentage_value++;
+				// if(index_percentage_value == RF_calibrate)
+				/* when searching descending */
+				index_percentage_value--;
+				if(index_percentage_value == RF_value_0)
+				{
+					calibration_status = CALIBRATION_ALL_VALUES_FOUND_FOR_SERIES;
+				}
+				else if (index_percentage_value > RF_value_100)
+				{
+					index_percentage_value = RF_value_100;
+				}
+				else
+				{
+					/* when searching ascending */
+					// calibration_status = CALIBRATION_WAITING_ANRF_FALL_DOWN;
+					/* when searching descending */
+					calibration_status = CALIBRATION_START_SEARCH;
+				}
 			}
 			else
 			{
-				refdacdds_value = REFDACDDS_VALUE;
-				dacdds_value = DACDDS_MAX;
-				level_value = LEVEL_MAX;
-				calibration_status = CALIBRATION_WAITING_ANRF_FALL_DOWN;
+				value_correct_counter++;
+				calibration_status = CALIBRATION_CHECKING_VALUE;
 			}
 		break;
 		case CALIBRATION_WAITING_ANRF_FALL_DOWN:
-			if(voltage_anrf < 20.0f)
+			refdacdds_value = REFDACDDS_VALUE;
+			dacdds_value = DACDDS_MIN;
+			level_value = LEVEL_MAX;
+
+			Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
+			Carga_TLC5620(DACDDS | dacdds_value, 3);
+			Carga_TLC5620(LEVEL | level_value, 1);
+			calibration_process(CALIBRATION_RF_READ_VOLTAGE);
+			if(voltage_anrf < VOLTAGE_TO_WAIT_ANRF)
 			{
 				calibration_status = CALIBRATION_START_SEARCH;
 			}
@@ -726,10 +726,64 @@ void calibration_process(unsigned char input)
 			if(dacdds_value >= DACDDS_MAX)
 			{
 				dacdds_value = DACDDS_MIN;
-				level_value--;
-				if(level_value <= LEVEL_MIN)
+				/* when searching ascending */
+				// level_value--;
+				// if(level_value <= LEVEL_MIN)
+				// {
+				// 	level_value = LEVEL_MAX;
+				// 	calibration_status = CALIBRATION_VALUE_NOT_REACHABLE;
+				// }
+				/* when searching descending */
+				level_value++;
+				if(level_value <= LEVEL_MIN || level_value >= LEVEL_MAX)
 				{
-					level_value = LEVEL_MAX;
+					level_value = LEVEL_MIN;
+					calibration_status = CALIBRATION_VALUE_NOT_REACHABLE;
+				}
+			}
+
+			Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
+			Carga_TLC5620(DACDDS | dacdds_value, 3);
+			Carga_TLC5620(LEVEL | level_value, 1);
+			calibration_status = CALIBRATION_CHECKING_VALUE;
+		break;
+		case CALIBRATION_CHECKING_VALUE:
+			calibration_process(CALIBRATION_RF_READ_VOLTAGE);
+			calibration_search_result = (calibration_values_t) is_voltage_correct(voltage_anrf, index_percentage_value, handle_value, freq_value);
+			/* when searching ascending */
+			// if((dacdds_value == (DACDDS_MIN + 1)) && (calibration_search_result == CALIBRATION_VALUE_UNDER))
+			/* when searching descending */
+			if((dacdds_value == (DACDDS_MIN + 1)) && (calibration_search_result == CALIBRATION_VALUE_OVER))
+			{
+				/* acceleration because if at max power (DACDDS_MIN) at that LEVEL we already are under desired value, means we can fastly increment LEVEL */
+				dacdds_value = DACDDS_MIN;
+				/* when searching ascending */
+				// level_value--;
+				// if(level_value <= LEVEL_MIN)
+				// {
+				// 	level_value = LEVEL_MAX;
+				// 	calibration_status = CALIBRATION_VALUE_NOT_REACHABLE;
+				// }
+				/* when searching descending */
+				level_value++;
+				if(level_value <= LEVEL_MIN || level_value >= LEVEL_MAX)
+				{
+					level_value = LEVEL_MIN;
+					calibration_status = CALIBRATION_VALUE_NOT_REACHABLE;
+				}
+				calibration_status = CALIBRATION_SEARCHING_VALUE;
+			}
+			/* when searching ascending */
+			// else if(calibration_search_result == CALIBRATION_VALUE_OVER)
+			/* when searching descending */
+			else if(calibration_search_result == CALIBRATION_VALUE_UNDER)
+			{
+				/* when searching descending */
+				level_value--;
+				dacdds_value = DACDDS_MIN + 1;
+				if(level_value <= LEVEL_MIN || level_value >= LEVEL_MAX)
+				{
+					level_value = LEVEL_MIN;
 					calibration_status = CALIBRATION_VALUE_NOT_REACHABLE;
 				}
 				calibration_status = CALIBRATION_SEARCHING_VALUE;
