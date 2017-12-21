@@ -143,6 +143,12 @@ unsigned char Cont_Reducir = 0;
 
 
 
+
+
+signed int dacdds_drift_correction = 0;
+signed int level_drift_correction = 0;
+unsigned char drift_dacdds_adjust_over = 0;
+unsigned char drift_level_adjust_over = 0;
 float voltage_anrf = 0.0f;
 extern rf_frequencies_t freq_value;
 extern unsigned char handle_value;
@@ -651,9 +657,152 @@ int main(void)
 			{
 				Sem_Lect_RF = 0;
 
+				if(Frecuencia == 10)
 				{
+					voltage_moving_average(read_voltage_anrf_1mhz(Lectura_RF()), &voltage_anrf);
+				}
+				else if (Frecuencia == 30)
+				{
+					voltage_moving_average(read_voltage_anrf_3mhz(Lectura_RF()), &voltage_anrf);
+				}
+
+				if (last_rf_value != Valor_RF)
+				{
+					last_rf_value = Valor_RF;
+					dacdds_drift_correction = 0;
+					level_drift_correction = 0;
+					drift_dacdds_adjust_over = 0;
+					drift_level_adjust_over = 0;
+				}
+
+				/* TODO: FOR SAFETY REASONS DO MORE AGGRESSIVE CONTROL IF MUCH OVER DESIRED VALUE. */
+				if((calibration_values_t) is_voltage_correct(voltage_anrf, Valor_RF, Aplicador, Frecuencia) == CALIBRATION_VALUE_OVER)
+				{
+					if((dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction <= (DACDDS_DRIFT_CORRECTION_MAX-1)))
 					{
+						dacdds_drift_correction++;
 					}
+					else
+					{
+						dacdds_drift_correction = DACDDS_DRIFT_CORRECTION_MAX;
+						if((level_drift_correction >= 0) && (level_drift_correction <= (LEVEL_DRIFT_CORRECTION_MAX-1)))
+						{
+							level_drift_correction++;
+							dacdds_drift_correction = 0;
+						}
+						else
+						{
+							level_drift_correction = LEVEL_DRIFT_CORRECTION_MAX;
+						}
+					}
+
+					if(Frecuencia == 10)
+					{
+						if(Aplicador == FACIAL || Aplicador == ESPE)
+						{
+							dacdds_value = array_dacdds[RF_arrays_1mhz_facial][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_1mhz_facial][Valor_RF] + level_drift_correction;
+						}
+						else if (Aplicador == CORPORAL)
+						{
+							dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_1mhz_corporal][Valor_RF] + level_drift_correction;
+						}
+					}
+					else if (Frecuencia == 30)
+					{
+						if(Aplicador == FACIAL || Aplicador == ESPE)
+						{
+							dacdds_value = array_dacdds[RF_arrays_3mhz_facial][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_3mhz_facial][Valor_RF] + level_drift_correction;
+						}
+						else if (Aplicador == CORPORAL)
+						{
+							dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_3mhz_corporal][Valor_RF] + level_drift_correction;
+						}
+					}
+					else if (Frecuencia == 0xBA)
+					{
+						if(Aplicador == FACIAL || Aplicador == ESPE)
+						{
+							dacdds_value = array_dacdds[RF_arrays_ba_facial][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_ba_facial][Valor_RF] + level_drift_correction;
+						}
+						else if (Aplicador == CORPORAL)
+						{
+							dacdds_value = array_dacdds[RF_arrays_ba_corporal][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_ba_corporal][Valor_RF] + level_drift_correction;
+						}
+					}
+
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
+					Carga_TLC5620(DACDDS | dacdds_value, 3);
+					Carga_TLC5620(LEVEL | level_value, 1);
+				}
+				else if((calibration_values_t) is_voltage_correct(voltage_anrf, Valor_RF, Aplicador, Frecuencia) == CALIBRATION_VALUE_UNDER)
+				{
+					if((dacdds_drift_correction <= (DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX+1)))
+					{
+						dacdds_drift_correction--;
+					}
+					else
+					{
+						dacdds_drift_correction = -DACDDS_DRIFT_CORRECTION_MAX;
+						if((level_drift_correction <= 0) && (level_drift_correction >= (-LEVEL_DRIFT_CORRECTION_MAX+1)))
+						{
+							level_drift_correction--;
+							dacdds_drift_correction = 0;
+						}
+						else
+						{
+							level_drift_correction = -LEVEL_DRIFT_CORRECTION_MAX;
+						}
+					}
+					
+					if(Frecuencia == 10)
+					{
+						if(Aplicador == FACIAL || Aplicador == ESPE)
+						{
+							dacdds_value = array_dacdds[RF_arrays_1mhz_facial][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_1mhz_facial][Valor_RF] + level_drift_correction;
+						}
+						else if (Aplicador == CORPORAL)
+						{
+							dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_1mhz_corporal][Valor_RF] + level_drift_correction;
+						}
+					}
+					else if (Frecuencia == 30)
+					{
+						if(Aplicador == FACIAL || Aplicador == ESPE)
+						{
+							dacdds_value = array_dacdds[RF_arrays_3mhz_facial][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_3mhz_facial][Valor_RF] + level_drift_correction;
+						}
+						else if (Aplicador == CORPORAL)
+						{
+							dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_3mhz_corporal][Valor_RF] + level_drift_correction;
+						}
+					}
+					else if (Frecuencia == 0xBA)
+					{
+						if(Aplicador == FACIAL || Aplicador == ESPE)
+						{
+							dacdds_value = array_dacdds[RF_arrays_ba_facial][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_ba_facial][Valor_RF] + level_drift_correction;
+						}
+						else if (Aplicador == CORPORAL)
+						{
+							dacdds_value = array_dacdds[RF_arrays_ba_corporal][Valor_RF] + dacdds_drift_correction;
+							level_value = array_level[RF_arrays_ba_corporal][Valor_RF] + level_drift_correction;
+						}
+					}
+
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
+					Carga_TLC5620(DACDDS | dacdds_value, 3);
+					Carga_TLC5620(LEVEL | level_value, 1);
 				}
 			}
 			if (No_Apli == 1)
