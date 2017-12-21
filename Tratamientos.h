@@ -22,8 +22,10 @@
 #define DACDDS_MAX (255-42)
 #define DACDDS_MIN (0+42)
 #define LEVEL_MAX 255
-#define LEVEL_MIN 180
+#define LEVEL_MIN (255-70)
+#define LEVEL_STARTING_VALUE (255-20)
 #define REFDACDDS_VALUE 127
+#define DACDDS_HALF_VALUE 127
 
 #define ARRAY_REFDACDDS 255 /* 0 */, 127 /* 5 */, 127 /* 10 */, 127 /* 15 */, 127 /* 20 */, 127 /* 25 */, 127 /* 30 */, 127 /* 35 */, 127 /* 40 */, 127 /* 45 */, 127 /* 50 */, 127 /* 55 */, 127 /* 60 */, 127 /* 65 */, 127 /* 70 */, 127 /* 75 */, 127 /* 80 */, 127 /* 85 */, 127 /* 90 */, 127 /* 95 */, 127 /* 100 */
 #define ARRAY_DACDDS 255 /* 0 */, 127 /* 5 */, 127 /* 10 */, 127 /* 15 */, 127 /* 20 */, 127 /* 25 */, 127 /* 30 */, 127 /* 35 */, 127 /* 40 */, 127 /* 45 */, 127 /* 50 */, 127 /* 55 */, 127 /* 60 */, 127 /* 65 */, 127 /* 70 */, 127 /* 75 */, 127 /* 80 */, 127 /* 85 */, 127 /* 90 */, 127 /* 95 */, 127 /* 100 */
@@ -51,5 +53,6 @@ void calibration_process(unsigned char input);				// Rutina para procesar órdene
 float read_voltage_anrf_1mhz(unsigned int adc_value);		// Rutina para leer la tensión RMS que hay en ANRF.
 float read_voltage_anrf_3mhz(unsigned int adc_value);		// Rutina para leer la tensión RMS que hay en ANRF.
 unsigned char is_voltage_correct(float voltage, unsigned char index, unsigned char handle, unsigned char frequency);
+void voltage_moving_average(float new_input_value, float * moving_average);
 
 /****************************** EOF *********************************/

@@ -61,16 +61,18 @@ unsigned int array_lect_rf_ba_corporal[21] = {0};
 float array_anrf_ba_corporal[21] = {0.0f};
 
 unsigned char handle_value = 0xFF;
-unsigned char freq_value = 0xFF;
+volatile rf_frequencies_t freq_value = RF_freq_undef;
 unsigned char dacdds_value = 0xFF;
 unsigned char refdacdds_value = 0xFF;
 unsigned char level_value = 0xFF;
 unsigned char index_percentage_value = 0xFF;
 calibration_process_t calibration_status = CALIBRATION_NO_STATE;
+calibration_values_t calibration_search_result = CALIBRATION_VALUE_UNDER;
 
 extern float voltage_anrf;
-
-
+extern volatile unsigned int tick_warmup;
+unsigned char warmup_started = 0;
+unsigned char last_level_value = LEVEL_MIN + 5;
 
 
 
@@ -459,15 +461,81 @@ void Procesar_Ordenes(unsigned char Ordre)
 	}
 }
 
+static unsigned char index = MOVING_AVERAGE_NUM_OF_SAMPLES; /* has to start at the end because of how loop works, first increments index and then writes value */
+static float array[MOVING_AVERAGE_NUM_OF_SAMPLES] = {0}; /* data array */
+
+/********************************************************************
+ * Function:	voltage_moving_average(input)							*
+ * Definition:	Rutina para tratar órdenes en modo calibración		*
+ ********************************************************************/
+void voltage_moving_average(float new_input_value, float * moving_average)
+{
+	/* TODO CHECK BECAUSE HAS STRANGE BEHAVIOR: VALUES IN ARRAY SEEM CORRECT BUT CALCULATIONS DO NOT */
+	// float new_value = 0.0f;
+	// float old_value = 0.0f;
+	float average = 0.0f;
+	unsigned char i = 0;
+	/* increment index and wrap around MOVING_AVERAGE_NUM_OF_SAMPLES, for ring buffering */
+	index = (index + 1) % MOVING_AVERAGE_NUM_OF_SAMPLES;
+
+	/* input new value into ring */
+	array[index] = new_input_value;
+
+	// /* add new value to moving average and eliminate oldest */
+	// new_value = array[index] / MOVING_AVERAGE_NUM_OF_SAMPLES;
+	// old_value = array[(index + 1) % MOVINfG_AVERAGE_NUM_OF_SAMPLES] / MOVING_AVERAGE_NUM_OF_SAMPLES;
+	// (*moving_average) = (float) ((*moving_average) + (new_value) - (old_value));
+
+	for(i = 0; i < MOVING_AVERAGE_NUM_OF_SAMPLES; i++)
+	{
+		average = (float) average + array[i];
+	}
+	average = (float) (average/((float)(MOVING_AVERAGE_NUM_OF_SAMPLES * 1.0f)));
+
+	(*moving_average) = (float) average;
+}
+
 /********************************************************************
  * Function:	calibration_process(input)							*
  * Definition:	Rutina para tratar órdenes en modo calibración		*
  ********************************************************************/
 float voltage = 0.0f;
+unsigned char value_correct_counter = 0;
 void calibration_process(unsigned char input)
 {
 	switch((calibration_process_t)input)
 	{
+		case CALIBRATION_STARTING_RF:
+			HS_FAN = 1;				// Enciendo ventilador radiador.
+			Mirar_Aplicador();
+			Rele.Bit.Rel3 = 1;
+			Control_TPIC();
+			Aplicador = handle_value;
+			Estado_Maquina = ACTIVE;
+			Estado_RF = O_N;		// Indico que la RF está en marcha.
+			Valor_RF = RF_value_5;
+			Frecuencia = freq_value;
+			refdacdds_value = REFDACDDS_VALUE;
+			dacdds_value = DACDDS_MIN;
+			level_value = LEVEL_STARTING_VALUE;
+			/* Enciende_RF */
+				Carga_TLC5620(REFDACBIAS | 200,3);
+				Carga_TLC5620(DACBIAS | Dac_Bias,3);	// 80
+				Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
+				Carga_TLC5620(DACDDS | DACDDS_MIN, 3);
+				Carga_TLC5620(LEVEL | LEVEL_STARTING_VALUE, 1);
+				Stop_Timer4();
+				Set_Freq_AD9834(freq_value*100000);	// Pongo frecuencia.
+				Apagada_RF = 0;
+			/* Enciende_RF */
+			calibration_status = CALIBRATION_RF_RUNNING;
+		break;
+		case CALIBRATION_RF_RUNNING:
+			Carga_TLC5620(REFDACDDS | refdacdds_value, 3);
+			Carga_TLC5620(DACDDS | dacdds_value, 3);
+			Carga_TLC5620(LEVEL | level_value, 1);
+			calibration_process(CALIBRATION_RF_READ_VOLTAGE);
+		break;
 		case CALIBRATION_SAVE_SERIAL:
 			if(((ReceivedDataBuffer[6] - 0x30) == FACIAL) || ((ReceivedDataBuffer[6] - 0x30) == ESPE))
 			{
@@ -501,7 +569,7 @@ void calibration_process(unsigned char input)
 				/* SAVE VALUE TO TABLE for accessing when starting RF */
 				if(handle_value == CORPORAL)
 				{
-					if(freq_value == 10)
+					if(freq_value == RF_freq_1mhz)
 					{
 						array_dacdds_1mhz_corporal[index_percentage_value] = dacdds_value;
 						array_refdacdds_1mhz_corporal[index_percentage_value] = refdacdds_value;
@@ -510,7 +578,7 @@ void calibration_process(unsigned char input)
 						// array_anrf_1mhz_corporal[index_percentage_value] = read_voltage_anrf_1mhz(array_lect_rf_1mhz_corporal[index_percentage_value]);
 						array_knowns_1mhz_corporal[index_percentage_value] = 1;
 					}
-					else if(freq_value == 30)
+					else if(freq_value == RF_freq_3mhz)
 					{
 						array_dacdds_3mhz_corporal[index_percentage_value] = dacdds_value;
 						array_refdacdds_3mhz_corporal[index_percentage_value] = refdacdds_value;
@@ -519,7 +587,7 @@ void calibration_process(unsigned char input)
 						// array_anrf_3mhz_corporal[index_percentage_value] = read_voltage_anrf_3mhz(array_lect_rf_3mhz_corporal[index_percentage_value]);
 						array_knowns_3mhz_corporal[index_percentage_value] = 1;
 					}
-					else if (freq_value == 0xBA)
+					else if (freq_value == RF_freq_sweep)
 					{
 						array_dacdds_ba_corporal[index_percentage_value] = dacdds_value;
 						array_refdacdds_ba_corporal[index_percentage_value] = refdacdds_value;
@@ -531,7 +599,7 @@ void calibration_process(unsigned char input)
 				}
 				else if (handle_value == ESPE || handle_value == FACIAL)
 				{
-					if(freq_value == 10)
+					if(freq_value == RF_freq_1mhz)
 					{
 						array_dacdds_1mhz_facial[index_percentage_value] = dacdds_value;
 						array_refdacdds_1mhz_facial[index_percentage_value] = refdacdds_value;
@@ -540,7 +608,7 @@ void calibration_process(unsigned char input)
 						// array_anrf_1mhz_facial[index_percentage_value] = read_voltage_anrf_1mhz(array_lect_rf_1mhz_facial[index_percentage_value]);
 						array_knowns_1mhz_facial[index_percentage_value] = 1;
 					}
-					else if(freq_value == 30)
+					else if(freq_value == RF_freq_3mhz)
 					{
 						array_dacdds_3mhz_facial[index_percentage_value] = dacdds_value;
 						array_refdacdds_3mhz_facial[index_percentage_value] = refdacdds_value;
@@ -549,7 +617,7 @@ void calibration_process(unsigned char input)
 						// array_anrf_3mhz_facial[index_percentage_value] = read_voltage_anrf_3mhz(array_lect_rf_3mhz_facial[index_percentage_value]);
 						array_knowns_3mhz_facial[index_percentage_value] = 1;
 					}
-					else if (freq_value == 0xBA)
+					else if (freq_value == RF_freq_sweep)
 					{
 						array_dacdds_ba_facial[index_percentage_value] = dacdds_value;
 						array_refdacdds_ba_facial[index_percentage_value] = refdacdds_value;
@@ -560,7 +628,8 @@ void calibration_process(unsigned char input)
 					}
 				}
 			}
-			else if (index_percentage_value == RF_calibrate)
+			//else if (index_percentage_value == RF_calibrate)
+			else
 			{
 				/* SEARCH FOR DACDDS AND LEVEL VALUES KNOWING DESIRED VOLTAGES */
 				index_percentage_value = RF_value_5;
@@ -693,6 +762,31 @@ void calibration_process(unsigned char input)
 					level_value = LEVEL_MAX;
 					calibration_status = CALIBRATION_VALUE_NOT_REACHABLE;
 				}
+				calibration_status = CALIBRATION_SEARCHING_VALUE;
+			}
+			else if(calibration_search_result == CALIBRATION_VALUE_OK)
+			{
+				/* found value was OK */
+				calibration_status = CALIBRATION_FOUND_VALUE;
+			}
+			else if((value_correct_counter > 0) && (calibration_search_result != CALIBRATION_VALUE_OK))
+			{
+				calibration_status = CALIBRATION_SEARCHING_VALUE;
+			}
+			else
+			{
+				/* value was not correct */
+				calibration_status = CALIBRATION_SEARCHING_VALUE;
+			}
+		break;
+		case CALIBRATION_RF_READ_VOLTAGE:
+			if(freq_value == RF_freq_1mhz)
+			{
+				voltage_moving_average(read_voltage_anrf_1mhz(Lectura_RF()), &voltage_anrf);
+			}
+			else if(freq_value == RF_freq_3mhz)
+			{
+				voltage_moving_average(read_voltage_anrf_3mhz(Lectura_RF()), &voltage_anrf);
 			}
 		break;
 		case CALIBRATION_VALUE_NOT_REACHABLE:
@@ -705,14 +799,48 @@ void calibration_process(unsigned char input)
 		break;
 		case CALIBRATION_STOP_RF:
 			Apaga_RF();
+			calibration_status = CALIBRATION_NO_STATE;
 		break;
-		case CALIBRATION_READ_SERIAL:
-		case CALIBRATION_READ_GAL:
-		case CALIBRATION_READ_STIM:
-		case CALIBRATION_READ_RF:
-		case CALIBRATION_READ_BIAS:
-		case CALIBRATION_READ_ALARM_TEMP:
-		/* should go with all other cases and respond the actual value being calibrated */
+		case CALIBRATION_WAITING_WARMUP:
+			if(warmup_started == 0)
+			{
+				HS_FAN = 1;				// Enciendo ventilador radiador.
+				handle_value = CORPORAL;
+				freq_value = RF_freq_3mhz; /* forcing 3 MHz for warmup */
+				Mirar_Aplicador();
+				Rele.Bit.Rel3 = 1;
+				Control_TPIC();
+				Aplicador = handle_value;
+				Estado_Maquina = ACTIVE;
+				Estado_RF = O_N;		// Indico que la RF está en marcha.
+				Valor_RF = RF_value_5;
+				Frecuencia = freq_value;
+				refdacdds_value = REFDACDDS_VALUE;
+				dacdds_value = DACDDS_MIN;
+				level_value = (255-60); /* forcing relatively high value for warmup */
+				/* Enciende_RF */
+					Carga_TLC5620(REFDACBIAS | 200,3);
+					Carga_TLC5620(DACBIAS | Dac_Bias,3);	// 80
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
+					Carga_TLC5620(DACDDS | DACDDS_MIN, 3);
+					Carga_TLC5620(LEVEL | level_value, 1);
+					Stop_Timer4();
+					Set_Freq_AD9834(freq_value*100000);	// Pongo frecuencia.
+					Apagada_RF = 0;
+				/* Enciende_RF */
+
+				tick_warmup = 0;
+				warmup_started = 1;
+			}
+			if(warmup_started == 1 && tick_warmup > 240)
+			{
+				tick_warmup = 0;
+				calibration_status = CALIBRATION_START_SEARCH;
+				index_percentage_value = RF_value_100;
+				freq_value = RF_freq_3mhz;
+				handle_value = CORPORAL;
+			}
+		break;
 		case CALIBRATION_NO_STATE:
 		default:
 		break;
@@ -741,11 +869,13 @@ void calibration_process(unsigned char input)
  ********************************************************************/
 float read_voltage_anrf_1mhz(unsigned int adc_value)
 {
-	return (0.1042f * adc_value + 12.422f)*1.0f;
+	// /* ORIGINAL */ return (0.1042f * adc_value + 12.422f)*1.0f;
+	return (0.1042f * adc_value + (12.422f + 1.0f))*1.0f; /* correction because I was always going ~1Vrms over setpoint */
 }
 float read_voltage_anrf_3mhz(unsigned int adc_value)
 {
-	return (0.1237f * adc_value + 13.133f)*1.0f;
+	// /* ORIGINAL */ return (0.1237f * adc_value + 13.133f)*1.0f;
+	return (0.1237f * adc_value + (13.133f + 1.0f))*1.0f; /* correction because I was always going ~1Vrms over setpoint */
 }
 
 /********************************************************************
