@@ -154,7 +154,7 @@ unsigned int Lectura_Stim(unsigned char Canal_Sti)//todo
 {
 	if (Estado_Stim == O_N)
 	{
-//		TEST1 = 1;	// Voy ha hacer test
+		// TEST1 = 1;	// Voy ha hacer test
 
 		AD1CHS = (ADC_CH0_POS_SAMPLEA_AN10 | ADC_CH0_NEG_SAMPLEA_NVREF);
 		DelayUs(1);
@@ -170,6 +170,10 @@ unsigned int Lectura_Stim(unsigned char Canal_Sti)//todo
 		IFS1bits.AD1IF = 0;
 
 		return (ADC1BUF0);
+	}
+	else
+	{
+		return 0;
 	}
 
 	// TSTCH1

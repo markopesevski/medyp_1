@@ -154,6 +154,7 @@ extern unsigned char index_percentage_value;
 extern calibration_process_t calibration_status;
 extern unsigned char ReceivedDataBuffer[64] RX_DATA_BUFFER_ADDRESS;
 calibration_values_t calibration_search_result = CALIBRATION_VALUE_UNDER;
+extern unsigned char last_rf_value;
 
 static unsigned int mostres[256] = {0};
 static unsigned int comptador_level = 0;
@@ -261,18 +262,6 @@ union unio_led{
 	}Bit;
 }Led;
 union unio_led Led;
-
-/********************* Declaración de funciones *********************/
-void Config_System (void);					// Configura oscilador del sistema.
-void Config_Ports (void);					// Configura puertos.
-void Init_Regs (void);						// Inicializa registros.
-void Config_Timer1 (void);					// Configura el Timer1 (tick general).
-void Config_Timer3 (void);					// Configura el Timer3.
-void Config_Timer4 (void);					// Configura el Timer4.
-void Config_Timer5 (void);					// Configura el Timer5.
-void Stop_Timer3 (void);					// Para Timer3.
-void Stop_Timer4 (void);					// Para Timer4.
-void Grabar_Flash (void);					// Memoriza variables.
 
 /*********************************************************************
  *********************************************************************
@@ -661,10 +650,10 @@ int orig_main(void)
 								Reducir = 1; 		// No tengo continuidad.
 								Cont_Reducir = TIEMPO_REDUCIR;
 								//#ifdef DEBUGAR
-								//Pitar = 1;//todo nova
-								/**/
-								LED_RUN = 1;
-								/**/
+									//Pitar = 1;//todo nova
+									/**/
+									LED_RUN = 1;
+									/**/
 								//#endif
 								/* WIP */
 								Reducir = 0; /* REMOVE WHEN DONE */
@@ -734,76 +723,16 @@ int orig_main(void)
 			{
 				Sem_Lect_RF = 0;
 
-				/* WIP */
-				// if(comptador_refdacdds >= 255)
-				// {
-				// 	comptador_level = (comptador_level + 1) % 45;
-				// 	comptador_refdacdds = 0;
-				// }
-				// else if(comptador_refdacdds == 0)
-				// {
-				// 	Nop();
-				// 	comptador_refdacdds++;
-				// }
-				// else
-				// {
-				// 	comptador_refdacdds++;
-				// }
-				// Carga_TLC5620(LEVEL | (255 - comptador_level),1);
-				// //Carga_TLC5620(REFDACDDS | 0,3);
-				// //Carga_TLC5620(DACDDS | 0,3);
-				// Carga_TLC5620(REFDACDDS | 127,3);
-				// Carga_TLC5620(DACDDS | (255 - comptador_refdacdds),3);
-				// ticks_reading_rf = 206;
-				// if(ticks_reading_rf < 206)
-				// {
-				// 	index = 5;
-				// 	if(index < 5)
-				// 	{
-				// 		accumulator += Lectura_RF();
-				// 		index++;
-				// 	}
-				// 	else
-				// 	{
-				// 		index = 0;
-				// 		accumulator /= 5;
-				// 		tensio_fora[ticks_reading_rf] = 0.1042f * accumulator + 12.422;
-				// 		ticks_reading_rf++;
-				// 		Carga_TLC5620(LEVEL | (VALOR_INICIAL_LEVEL + ticks_reading_rf),1);
-				// 		accumulator = 0.0f;
-				// 	}
-				// 	Carga_TLC5620(LEVEL | VALOR_INICIAL_LEVEL,1);
-				// 	Carga_TLC5620(REFDACDDS | VALOR_REFDACDDS,3);
-				// }
-				// else
-				// {
-				// 	Nop();
-				// 	// index = 0;
-				// 	//ticks_reading_rf = 0;
-				// }
-				/* WIP */
-
-				// Lect_RF = 0;
-				// Lect_RF = Lectura_RF();
-				// voltage_anrf = 0.1042f * Lect_RF + 12.422;
-				/*
-				if (Lect_RF >= 898)			// Si estoy empezando a subir mucho, bajo el nivel.
 				{
-					if (Offset_RF < 253)
 					{
-						Offset_RF = Offset_RF + 2;
-						Val_RF = Offset_RF - (Valor_RF * 5);
-						Carga_TLC5620(DACDDS | Val_RF,3);
 					}
 				}
-				*/
 			}
 			if (No_Apli == 1)
 			{
 				Apaga_RF();
 			}
 		}
-
 
 		if (Estado_Stim == O_N)
 		{
@@ -858,13 +787,7 @@ int orig_main(void)
 		/* every 1000ms */
 		if (Sem.Temper == 1)	// Miro temperatura cada 1 segundo.	// TODO se ha movido a cada 200ms se podria quitar?
 		{
-			if (Estoy_Test == CALIBRA_RF)
-			{
-				/* bombing tablet too much? */
-				// calibration_process(CALIBRATION_REFRESH_INTAB);
-				// Nop();
-			}
-			else if (Estoy_Test != NO_TEST)
+			if (Estoy_Test != NO_TEST && Estoy_Test != CALIBRA_RF)
 			{
 				Cont_Test++;
 				if (Cont_Test >= 10)
@@ -1383,10 +1306,10 @@ void __ISR(_TIMER_1_VECTOR, ipl4) Timer1Handler(void)
 		tick_Led = 0;
 		LED_RUN = ~LED_RUN; 	//todo VAAAA
 		Sem.Temper = 1;
+		/* WIP */
+		// Sem_Lect_RF = 1; /* ORIGINAL */
+		/* WIP */
 		Segundos++;
-		/* WIP */
-		// Sem_Lect_RF = 1; /* UNCOMMENT WHEN DONE */
-		/* WIP */
 	}
 
 	tick_Manac++;

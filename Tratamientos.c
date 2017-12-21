@@ -181,6 +181,7 @@ unsigned char Ant_Valor_Stim = 0;
 unsigned char Ant_Valor_Lift = 0;
 unsigned char Ant_Valor_Galva = 0;
 unsigned char Ant_Valor_RF = 0;
+unsigned char last_rf_value = 0;
 unsigned char Ant_Frecuencia = 0;
 unsigned char Ant_Senyal_Stim = 0;
 unsigned char Estado_Stim = OFF;
@@ -1208,8 +1209,6 @@ void Apaga_Lift(void)
  ********************************************************************/
 void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 {
-	unsigned char proba = V_RF;
-
 	if (No_Apli == 0)		// Si detecto aplicador...
 	{
 		if (((F_RF >= 10)&&(F_RF <= 30))||(F_RF == 0xBA))	// 1MHz, 3MHz o barrido
@@ -1223,7 +1222,7 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 			Carga_TLC5620(REFDACBIAS | 200,3);
 			Carga_TLC5620(DACBIAS | Dac_Bias,3);	// 80
 
-	//		V_RF = 170 - (V_RF * 2.5);		 // TODO OJO
+			// V_RF = 170 - (V_RF * 2.5);		 // TODO OJO
 
 			if (Aplicador == CORPORAL)
 			{
@@ -1282,7 +1281,8 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 			}
 
 
-/*			if (Aplicador == CORPORAL)
+			/*
+			if (Aplicador == CORPORAL)
 			{
 				Carga_TLC5620(REFDACDDS | 114,3);
 				if (V_RF == 0)
@@ -1306,7 +1306,7 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 					V_RF = 148 - V_RF;
 				}
 			}
-*/
+			*/
 			/**/
 			Offset_RF = 170;	// todo mirar bien
 			/**/

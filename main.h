@@ -218,4 +218,17 @@ typedef enum
 // Valores predeterminados NVM.
 #define NVM_PROGRAM_PAGE 	0xBD01F000		// MIRAR BIEN DONDE ESCRIBO (en el .map)
 
+/********************* Declaración de funciones *********************/
+void Config_System (void);					// Configura oscilador del sistema.
+void Config_Ports (void);					// Configura puertos.
+void Init_Regs (void);						// Inicializa registros.
+void Config_Timer1 (void);					// Configura el Timer1 (tick general).
+void Config_Timer2 (void);					// Configura el Timer2.
+void Config_Timer3 (void);					// Configura el Timer3.
+void Config_Timer4 (void);					// Configura el Timer4.
+void Config_Timer5 (void);					// Configura el Timer5.
+void Stop_Timer3 (void);					// Para Timer3.
+void Stop_Timer4 (void);					// Para Timer4.
+void Grabar_Flash (void);					// Memoriza variables.
+
 /****************************** EOF *********************************/

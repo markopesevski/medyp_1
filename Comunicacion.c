@@ -25,7 +25,7 @@
 
 extern unsigned char Ant_Estado_Maquina;
 extern calibration_process_t calibration_status;
-extern unsigned char send_message;
+extern unsigned char last_rf_value;
 
 
 
@@ -128,7 +128,12 @@ void ProcessIO (void)
 						Valor_Stim  = ReceivedDataBuffer[3];
 						Valor_Galva = ReceivedDataBuffer[4];
 						Valor_Lift  = ReceivedDataBuffer[5];
-						Valor_RF = ReceivedDataBuffer[6];
+						if (ReceivedDataBuffer[6] != Valor_RF)
+						{
+							last_rf_value = Valor_RF;
+							Valor_RF = ReceivedDataBuffer[6];
+						}
+
 						Frecuencia  = ReceivedDataBuffer[7];
 						if (Estoy_Test == NO_TEST)
 						{
@@ -391,16 +396,6 @@ void ProcessIO (void)
 			USBDeviceDetach();
 			USBDisableInterrupts();
 			JumpToBoot();
-		}
-    }
-    else if(send_message == 1)
-    {
-    	if(!HIDTxHandleBusy(USBInHandle))
-    	{
-			Calc_Check();
-			USBInHandle = HIDTxPacket(HID_EP,(BYTE*)&ToSendDataBuffer[0],64);	// Prepare the USB module to send the data packet to the host.
-			Limpia_Buffer(IN);
-	    	send_message = 0;
 		}
     }
 }
