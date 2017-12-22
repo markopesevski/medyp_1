@@ -293,7 +293,8 @@ void Init_Regs (void)
 	
 	// Lectura de valores en memoria.
 	Hay_App = *(int *)(NVM_PROGRAM_PAGE);	
-	if (Hay_App > 1) Hay_App = NO;
+	///* ORIGINAL */if (Hay_App > 1) Hay_App = NO;
+	/* 20171222 */if (Hay_App != SI) Hay_App = NO;
 }	
 								
 /********************************************************************
