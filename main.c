@@ -1256,7 +1256,6 @@ void Init_Regs (void)
  ********************************************************************/
 void Grabar_Flash(void)
 {
-	unsigned int size_dacdds = sizeof(array_dacdds);
 	unsigned int i = 0;
 	unsigned int j = 0;
 	unsigned int value_to_write_dacdds = 0;
