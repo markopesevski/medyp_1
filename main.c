@@ -592,9 +592,6 @@ int main(void)
 									LED_RUN = 1;
 									/**/
 								//#endif
-								/* WIP */
-								Reducir = 0; /* REMOVE WHEN DONE */
-								/* WIP */
 							}
 						}
 					}
@@ -762,7 +759,7 @@ int main(void)
 							level_drift_correction = -LEVEL_DRIFT_CORRECTION_MAX;
 						}
 					}
-					
+
 					if(Frecuencia == 10)
 					{
 						if(Aplicador == FACIAL || Aplicador == ESPE)
