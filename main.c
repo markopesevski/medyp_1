@@ -47,8 +47,8 @@
 
 #pragma config FPLLIDIV = DIV_2, FPLLMUL = MUL_20, FPLLODIV = DIV_1, FWDTEN = OFF
 #pragma config POSCMOD = HS, FNOSC = PRIPLL, FPBDIV = DIV_1, OSCIOFNC = OFF
-//#pragma config CP = ON, BWP = OFF, PWP = OFF, FSOSCEN = OFF, FCKSM = CSECME, DEBUG = OFF 	// Programar.
-#pragma config CP = OFF, BWP = OFF, PWP = OFF, FSOSCEN = OFF, FCKSM = CSECME				// Debugar.
+#pragma config CP = ON, BWP = OFF, PWP = OFF, FSOSCEN = OFF, FCKSM = CSECME, DEBUG = OFF 	// Programar.
+//#pragma config CP = OFF, BWP = OFF, PWP = OFF, FSOSCEN = OFF, FCKSM = CSECME				// Debugar.
 #pragma config IESO = OFF, ICESEL = ICS_PGx2
 #pragma config UPLLEN = ON, UPLLIDIV = DIV_2
 #pragma config FVBUSONIO = OFF
@@ -160,7 +160,10 @@ extern calibration_process_t calibration_status;
 extern unsigned char ReceivedDataBuffer[64] RX_DATA_BUFFER_ADDRESS;
 extern unsigned char array_dacdds[6][21];
 extern unsigned char array_level[6][21];
+extern unsigned char array_dacdds_fab[6][21];
+extern unsigned char array_level_fab[6][21];
 extern unsigned char last_rf_value;
+static calibration_arrays_saved_t arrays_saved = ARRAYS_NOT_SAVED;
 
 #ifdef DEBUG_MARKO
 	static float tensio_fora[256] = {0.0f};
@@ -1147,6 +1150,14 @@ void Config_Ports (void)	// 1->input, 0->output
  ********************************************************************/
 void Init_Regs (void)
 {
+	unsigned int size_dacdds = sizeof(array_dacdds);
+	unsigned int size_level = sizeof(array_level);
+	unsigned int i = 0;
+	unsigned int j = 0;
+	unsigned int counter = 0;
+	unsigned int value_to_read_dacdds = 0;
+	unsigned int value_to_read_level = 0;
+
 	USBOutHandle = 0;	// Initialize the variable holding the handle for the last transmission.
 	USBInHandle = 0;
 
@@ -1205,6 +1216,35 @@ void Init_Regs (void)
 		Temperatura_Alarma = TEMPERATURA_ALARMA;
 	}
 
+	arrays_saved = *(int *)(NVM_PROGRAM_PAGE + 32);
+	if(arrays_saved == ARRAYS_SAVED)
+	{
+		for(i = 0; i < 6; i++)
+		{
+			for(j = 0; j < 21; j++)
+			{
+				if(j>1 && (j%4 == 0))
+				{
+					value_to_read_dacdds = *(unsigned int *) (NVM_PROGRAM_PAGE + 64 + counter);
+					value_to_read_level = *(unsigned int *) (NVM_PROGRAM_PAGE + 64 + 32 + counter);
+					counter++;
+				}
+				else
+				{
+					value_to_read_dacdds >>= 8;
+					array_dacdds[i][j] = value_to_read_dacdds & 0xFF;
+					value_to_read_level >>= 8;
+					array_level[i][j] = value_to_read_level & 0xFF;
+				}
+			}
+		}
+	}
+	else
+	{
+		memcpy(array_level, array_level_fab, size_level);
+		memcpy(array_dacdds, array_dacdds_fab, size_dacdds);
+	}
+
 	Hay_App = *(int *)(NVM_PROGRAM_PAGE);
 	if (Hay_App != SI)
 	{
@@ -1219,6 +1259,13 @@ void Init_Regs (void)
  ********************************************************************/
 void Grabar_Flash(void)
 {
+	unsigned int size_dacdds = sizeof(array_dacdds);
+	unsigned int i = 0;
+	unsigned int j = 0;
+	unsigned int value_to_write_dacdds = 0;
+	unsigned int value_to_write_level = 0;
+	unsigned int counter = 0;
+
 	int_stats = INTDisableInterrupts();
 	NVMErasePage((void *)NVM_PROGRAM_PAGE);
 	NVMWriteWord((void*)(NVM_PROGRAM_PAGE), Hay_App);
@@ -1229,6 +1276,28 @@ void Grabar_Flash(void)
 	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 20), Dac_RF);
 	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 24), Dac_Bias);
 	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 28), Temperatura_Alarma);
+	for(i = 0; i < 6; i++)
+	{
+		for(j = 0; j < 21; j++)
+		{
+			if(j>1 && (j%4 == 0))
+			{
+				NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 64 + counter), value_to_write_dacdds);
+				DelayMs(1);
+				NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 64 + 32 + counter), value_to_write_level);
+				DelayMs(1);
+				counter++;
+			}
+			else
+			{
+				value_to_write_dacdds <<= 8;
+				value_to_write_dacdds |= array_dacdds[i][j];
+				value_to_write_level <<= 8;
+				value_to_write_level |= array_dacdds[i][j];
+			}
+		}
+	}
+	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 32), ARRAYS_SAVED);
 
 //	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 108), Suma_Bytes);
 

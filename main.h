@@ -33,6 +33,12 @@
 #include "Lectura_ADC.h"
 #include "Control_Volumen.h"
 
+typedef enum
+{
+	ARRAYS_SAVED = 0xDEADBEEF,
+	ARRAYS_NOT_SAVED = 0xFFFFFFFF
+} calibration_arrays_saved_t;
+
 typedef enum calibration_values_t
 {
 	CALIBRATION_VALUE_UNDER = 0,
