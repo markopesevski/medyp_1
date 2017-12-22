@@ -499,18 +499,19 @@ int main(void)
 
 		if(Estoy_Test == CALIBRA_RF)
 		{
-			/* since it is timed with the TIM1, and 50ms period, every 100 ms: */
-			if(tick_pushbutton_calibra >= 2)
+			/* since it is timed with the TIM1, and 50ms period, every 50 ms: */
+			if(tick_pushbutton_calibra >= 10)
 			{
 				tick_pushbutton_calibra = 0;
 				Led.Bit.LedPB = ~Led.Bit.LedPB;
 				Control_TPIC();
 			}
 
-			/* since it is timed with the TIM1, and 50ms period, every 50 ms: */
+			/* since it is timed with the TIM1, and 50ms period, every 250 ms: */
 			if(tick_calibra > 0)
 			{
-				if(tick_calibra > 10)
+				/* every 250 ms */
+				if(tick_calibra > 50)
 				{
 					tick_warmup++;
 					tick_calibra = 0;
@@ -880,8 +881,8 @@ int main(void)
 			// Control_Temperatura();
 		}
 
-		/* every 50ms */
-		if (Sem.Tecla == 1)		// Cada 50 ms.
+		/* every 100ms */
+		if (Sem.Tecla == 1)		// Cada 100 ms.
 		{
 			Sem.Tecla = 0;
 
@@ -921,7 +922,7 @@ int main(void)
 							Standby = 0;
 						}
 					}
-					if (tick_Tecla >= 400)
+					if (tick_Tecla >= 40)
 					{
 						Blink_PB = 3;
 					}
@@ -1149,11 +1150,11 @@ void Init_Regs (void)
 {
 	unsigned int size_dacdds = sizeof(array_dacdds);
 	unsigned int size_level = sizeof(array_level);
-	unsigned int i = 0;
-	unsigned int j = 0;
-	unsigned int counter = 0;
 	unsigned int value_to_read_dacdds = 0;
 	unsigned int value_to_read_level = 0;
+	unsigned int counter = 0;
+	unsigned int i = 0;
+	unsigned int j = 0;
 
 	USBOutHandle = 0;	// Initialize the variable holding the handle for the last transmission.
 	USBInHandle = 0;
@@ -1214,25 +1215,30 @@ void Init_Regs (void)
 	}
 
 	arrays_saved = *(int *)(NVM_PROGRAM_PAGE + 32);
+	int_stats = INTDisableInterrupts();
+	counter = 0;
 	if(arrays_saved == ARRAYS_SAVED)
 	{
 		for(i = 0; i < 6; i++)
 		{
 			for(j = 0; j < 21; j++)
 			{
-				if(j>1 && (j%4 == 0))
+				if(j == 0 || j == 4 || j == 8 || j == 12 || j == 16 || j == 20)
 				{
 					value_to_read_dacdds = *(unsigned int *) (NVM_PROGRAM_PAGE + 64 + counter);
-					value_to_read_level = *(unsigned int *) (NVM_PROGRAM_PAGE + 64 + 32 + counter);
-					counter++;
+					value_to_read_level = *(unsigned int *) (NVM_PROGRAM_PAGE + 64 + (64 * 4) + counter);
+					counter += 4;
+					if(j == 20)
+					{
+						value_to_read_dacdds <<= 24;
+						value_to_read_level <<= 24;
+					}
 				}
-				else
-				{
-					value_to_read_dacdds >>= 8;
-					array_dacdds[i][j] = value_to_read_dacdds & 0xFF;
-					value_to_read_level >>= 8;
-					array_level[i][j] = value_to_read_level & 0xFF;
-				}
+
+				array_dacdds[i][j] = (value_to_read_dacdds & 0xFF000000) >> 24;
+				value_to_read_dacdds <<= 8;
+				array_level[i][j] = (value_to_read_level & 0xFF000000) >> 24;
+				value_to_read_level <<= 8;
 			}
 		}
 	}
@@ -1241,9 +1247,11 @@ void Init_Regs (void)
 		memcpy(array_level, array_level_fab, size_level);
 		memcpy(array_dacdds, array_dacdds_fab, size_dacdds);
 	}
+	DelayMs(100);
+	INTRestoreInterrupts(int_stats);
 
 	Hay_App = *(int *)(NVM_PROGRAM_PAGE);
-	if (Hay_App != SI)
+	if (Hay_App != SI && arrays_saved != ARRAYS_SAVED)
 	{
 		Hay_App = SI;
 		Grabar_Flash();
@@ -1256,11 +1264,11 @@ void Init_Regs (void)
  ********************************************************************/
 void Grabar_Flash(void)
 {
-	unsigned int i = 0;
-	unsigned int j = 0;
 	unsigned int value_to_write_dacdds = 0;
 	unsigned int value_to_write_level = 0;
 	unsigned int counter = 0;
+	unsigned int i = 0;
+	unsigned int j = 0;
 
 	int_stats = INTDisableInterrupts();
 	NVMErasePage((void *)NVM_PROGRAM_PAGE);
@@ -1272,25 +1280,22 @@ void Grabar_Flash(void)
 	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 20), Dac_RF);
 	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 24), Dac_Bias);
 	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 28), Temperatura_Alarma);
+	counter = 0;
 	for(i = 0; i < 6; i++)
 	{
 		for(j = 0; j < 21; j++)
 		{
-			if(j>1 && (j%4 == 0))
+			value_to_write_dacdds |= array_dacdds[i][j];
+			value_to_write_level |= array_level[i][j];
+			if(j == 4-1 || j == 8-1 || j == 12-1 || j == 16-1 || j == 20-1 || j == 21-1)
 			{
-				NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 64 + counter), value_to_write_dacdds);
-				DelayMs(1);
-				NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 64 + 32 + counter), value_to_write_level);
-				DelayMs(1);
-				counter++;
+				NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 0x40 + counter), value_to_write_dacdds);
+				NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 0x40 + (64 * 4) + counter), value_to_write_level);
+				counter += 4;
 			}
-			else
-			{
-				value_to_write_dacdds <<= 8;
-				value_to_write_dacdds |= array_dacdds[i][j];
-				value_to_write_level <<= 8;
-				value_to_write_level |= array_dacdds[i][j];
-			}
+			value_to_write_dacdds <<= 8;
+			value_to_write_level <<= 8;
+
 		}
 	}
 	NVMWriteWord((void*)(NVM_PROGRAM_PAGE + 32), ARRAYS_SAVED);
@@ -1324,6 +1329,16 @@ void Config_Timer1(void)
 	OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_64, T1_TICK);	// Enable Timer1, internal clk, prescaler 1:64; PR1.
 	// Ahora mismo voy a 80MH
 	// Un tick del Timer1 = (1/80M)*64 = 1250KHz (0.8us). Su interrupción es cada 62500 => 62500/1250KHz = 50 ms
+}
+/********************************************************************
+ * Function:	Stop_Timer1()										*
+ * Definition:	Para el timer 1.									*
+ ********************************************************************/
+void Stop_Timer1(void)
+{
+	T1CONbits.TON = 0;		// Paro Timer1.
+	DisableIntT1;			// Paro interrupción Timer1.
+	mT1ClearIntFlag();		// Clear the interrupt flag.
 }
 
 /********************************************************************
@@ -1435,7 +1450,7 @@ void Config_Timer5(void)
 
 /********************************************************************
  * Function:	Timer1Handler()										*
- * Definition:	ISR del Timer1. Cada 50 ms.							*
+ * Definition:	ISR del Timer1. Cada 5 ms.							*
  ********************************************************************/
 void __ISR(_TIMER_1_VECTOR, ipl4) Timer1Handler(void)
 {
@@ -1754,5 +1769,42 @@ void __ISR(_TIMER_5_VECTOR, ipl5) Timer5Handler(void)		// Cada 25 us para electr
 	}
 	*/
 }
+
+//	Exception handler:
+  static enum {
+  	EXCEP_IRQ = 0,			// interrupt
+  	EXCEP_AdEL = 4,			// address error exception (load or ifetch)
+  	EXCEP_AdES,				// address error exception (store)
+  	EXCEP_IBE,				// bus error (ifetch)
+  	EXCEP_DBE,				// bus error (load/store)
+  	EXCEP_Sys,				// syscall
+  	EXCEP_Bp,				// breakpoint
+  	EXCEP_RI,				// reserved instruction
+  	EXCEP_CpU,				// coprocessor unusable
+  	EXCEP_Overflow,			// arithmetic overflow
+  	EXCEP_Trap,				// trap (possible divide by zero)
+  	EXCEP_IS1 = 16,			// implementation specfic 1
+  	EXCEP_CEU,				// CorExtend Unuseable
+  	EXCEP_C2E				// coprocessor 2
+  } _excep_code;
+
+  static unsigned int _epc_code;
+  static unsigned int _excep_addr;
+
+  // this function overrides the normal _weak_ generic handler
+  void _general_exception_handler(void)
+  {
+  	asm volatile("mfc0 %0,$13" : "=r" (_excep_code));
+  	asm volatile("mfc0 %0,$14" : "=r" (_excep_addr));
+
+  	_excep_code = (_excep_code & 0x0000007C) >> 2;
+  	 	while (1) {
+  		// Examine _excep_code to identify the type of exception
+  		// Examine _excep_addr to find the address that caused the exception
+  		Nop();
+  		Nop();
+  		Nop();
+   	}
+  }//	End of exception handler
 
 /****************************** EOF *********************************/

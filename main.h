@@ -138,9 +138,9 @@ typedef enum
 
 #ifndef DEBUG_MARKO
 	// /* ORIGINAL */ #define T1_TICK					62500		// Tick general -> 	1tick = 50ms 	(a 80MHz).
-	#define T1_TICK					6250		// Tick general -> 	1tick = 5ms 	(a 80MHz).
+	/* ORIGINAL */ #define T1_TICK					6250		// Tick general -> 	1tick = 5ms 	(a 80MHz).
 #else // DEBUG_MARKO
-	#define T1_TICK					1250		// Tick general -> 	1tick = 1ms 	(a 80MHz).
+	#define T1_TICK					1250		// Tick general -> 	1tick = 50ms 	(a 80MHz).
 #endif // DEBUG_MARKO
 #define T3_TICK					3125		// Tick galva -> 	1tick = 10ms 	(a 80MHz).
 #define T4_TICK					62500		// Tick barrido ->	1tick = 50ms 	(a 80MHz).
@@ -243,6 +243,7 @@ void Config_Timer2 (void);					// Configura el Timer2.
 void Config_Timer3 (void);					// Configura el Timer3.
 void Config_Timer4 (void);					// Configura el Timer4.
 void Config_Timer5 (void);					// Configura el Timer5.
+void Stop_Timer1 (void);					// Para Timer1.
 void Stop_Timer3 (void);					// Para Timer3.
 void Stop_Timer4 (void);					// Para Timer4.
 void Grabar_Flash (void);					// Memoriza variables.

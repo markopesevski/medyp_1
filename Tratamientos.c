@@ -899,7 +899,7 @@ void calibration_process(unsigned char input)
 				tick_warmup = 0;
 				warmup_started = 1;
 			}
-			if(warmup_started == 1 && tick_warmup > 240)
+			if(warmup_started == 1 && tick_warmup > 24000)
 			{
 				tick_warmup = 0;
 				calibration_status = CALIBRATION_START_SEARCH;

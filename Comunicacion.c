@@ -392,6 +392,7 @@ void ProcessIO (void)
         if (Salta == 1)		// Por actualización o inicio normal.
 		{
 			Salta = 0;
+			Stop_Timer1();
 			DelayMs(250);	// Espero a que acabe de enviar la trama.
 			USBDeviceDetach();
 			USBDisableInterrupts();
