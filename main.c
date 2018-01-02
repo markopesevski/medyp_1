@@ -679,14 +679,14 @@ int main(void)
 				/* TODO: FOR SAFETY REASONS DO MORE AGGRESSIVE CONTROL IF MUCH OVER DESIRED VALUE. */
 				if((calibration_values_t) is_voltage_correct(voltage_anrf, Valor_RF, Aplicador, Frecuencia) == CALIBRATION_VALUE_OVER)
 				{
-					if((dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction <= (DACDDS_DRIFT_CORRECTION_MAX-1)))
+					if((dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction < DACDDS_DRIFT_CORRECTION_MAX))
 					{
 						dacdds_drift_correction++;
 					}
 					else
 					{
 						dacdds_drift_correction = DACDDS_DRIFT_CORRECTION_MAX;
-						if((level_drift_correction >= 0) && (level_drift_correction <= (LEVEL_DRIFT_CORRECTION_MAX-1)))
+						if((level_drift_correction >= (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction < LEVEL_DRIFT_CORRECTION_MAX))
 						{
 							level_drift_correction++;
 							dacdds_drift_correction = 0;
@@ -743,14 +743,14 @@ int main(void)
 				}
 				else if((calibration_values_t) is_voltage_correct(voltage_anrf, Valor_RF, Aplicador, Frecuencia) == CALIBRATION_VALUE_UNDER)
 				{
-					if((dacdds_drift_correction <= (DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX+1)))
+					if((dacdds_drift_correction > (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction <= DACDDS_DRIFT_CORRECTION_MAX))
 					{
 						dacdds_drift_correction--;
 					}
 					else
 					{
 						dacdds_drift_correction = -DACDDS_DRIFT_CORRECTION_MAX;
-						if((level_drift_correction <= 0) && (level_drift_correction >= (-LEVEL_DRIFT_CORRECTION_MAX+1)))
+						if((level_drift_correction > (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction <= LEVEL_DRIFT_CORRECTION_MAX))
 						{
 							level_drift_correction--;
 							dacdds_drift_correction = 0;
