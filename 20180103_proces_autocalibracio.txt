@@ -1,0 +1,20 @@
+ÉS UN PROCÉS LLARG (~20 min), AIXÍ QUE PACIÈNCIA.
+proces per fer autocalibració:
+0	connectar el provador a la sortida de RF que tingui connectat el relé més llunyà (Rele3, o connector CN10 a la placa)
+1	entrar al menú secret
+2	escriure un 0 a la temperatura d'alarma -> set
+3	el led del switch hauria de començar a fer intermitències
+4	escriure un 301 al número de sèrie -> set
+5	donar-li al set de la temperatura d'alarma
+6	les intermitències del led haurien de parar
+7	tornar a donar-li al set de la temperatura d'alarma
+8	el led del switch hauria de començar a fer intermitències, i a més, en aquest punt hauríem d'estar veient RF a fora
+9	llegir temperatura actual (botó READ)
+10	hauria de començar el procés de warm-up durant 2 minuts donant RF a 3 MHz (nivell indeterminat, dependrà de cada placa)
+11	després d'aquests 2 minuts de warm-up començarà a buscar els valors d'ajust fi i gruix per cada nivell de tensió donat
+12	ESPERAR FINS QUE ACABI I NO TOCAR RES MÉS
+13	quan l'aparell hagi apagat la RF (veure amb oscil·loscopi) voldrà dir que ja ha trobat tots els valors
+14	donar al botó set de la temperatura d'alarma per sortir del mode de calibració
+15	el led del switch hauria de deixar de fer intermitències
+16	en aquest punt, sortir del menú secret i comprovar els valors donant RF des del menú normal
+17	si els valors estan bé, tornar al menú secret i GUARDAR TODOS LOS VALORES
