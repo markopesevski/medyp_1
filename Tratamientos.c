@@ -514,6 +514,7 @@ float voltage = 0.0f;
 unsigned char value_correct_counter = 0;
 void calibration_process(unsigned char input)
 {
+	unsigned int i = 0;
 	switch((calibration_process_t)input)
 	{
 		case CALIBRATION_STARTING_RF:
@@ -539,6 +540,7 @@ void calibration_process(unsigned char input)
 				Set_Freq_AD9834(freq_value*100000);	// Pongo frecuencia.
 				Apagada_RF = 0;
 			/* Enciende_RF */
+			warmup_started = 0;
 			calibration_status = CALIBRATION_RF_RUNNING;
 		break;
 		case CALIBRATION_RF_RUNNING:
@@ -862,6 +864,14 @@ void calibration_process(unsigned char input)
 			else if(freq_value == RF_freq_1mhz && handle_value == FACIAL)
 			{
 				calibration_status = CALIBRATION_STOP_RF;
+
+				for(i = 0; i < 21; i++)
+				{
+					array_dacdds[RF_arrays_ba_facial][i] = (array_dacdds[RF_arrays_1mhz_facial][i] + array_dacdds[RF_arrays_3mhz_facial][i])/2;
+					array_level[RF_arrays_ba_facial][i] = (array_level[RF_arrays_1mhz_facial][i] + array_level[RF_arrays_3mhz_facial][i])/2;
+					array_dacdds[RF_arrays_ba_corporal][i] = (array_dacdds[RF_arrays_1mhz_corporal][i] + array_dacdds[RF_arrays_3mhz_corporal][i])/2;
+					array_level[RF_arrays_ba_corporal][i] = (array_level[RF_arrays_1mhz_corporal][i] + array_level[RF_arrays_3mhz_corporal][i])/2;
+				}
 			}
 
 		break;
@@ -900,7 +910,8 @@ void calibration_process(unsigned char input)
 				tick_warmup = 0;
 				warmup_started = 1;
 			}
-			if(warmup_started == 1 && tick_warmup > 24000)
+			/* tick_warmup++ every 250ms, so 2 minutes = 120s -> 120/0.250 = 480 clicks */
+			if(warmup_started == 1 && tick_warmup > 480)
 			{
 				tick_warmup = 0;
 				calibration_status = CALIBRATION_START_SEARCH;
