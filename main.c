@@ -158,10 +158,10 @@ extern unsigned char refdacdds_value;
 extern unsigned char index_percentage_value;
 extern calibration_process_t calibration_status;
 extern unsigned char ReceivedDataBuffer[64] RX_DATA_BUFFER_ADDRESS;
-extern unsigned char array_dacdds[6][21];
-extern unsigned char array_level[6][21];
-extern unsigned char array_dacdds_fab[6][21];
-extern unsigned char array_level_fab[6][21];
+extern unsigned char array_dacdds[RF_arrays_max][RF_max_values];
+extern unsigned char array_level[RF_arrays_max][RF_max_values];
+extern unsigned char array_dacdds_fab[RF_arrays_max][RF_max_values];
+extern unsigned char array_level_fab[RF_arrays_max][RF_max_values];
 extern unsigned char last_rf_value;
 static calibration_arrays_saved_t arrays_saved = ARRAYS_NOT_SAVED;
 
@@ -511,7 +511,7 @@ int main(void)
 			if(tick_calibra > 0)
 			{
 				/* every 250 ms */
-				if(tick_calibra > 50)
+				if(tick_calibra > CALIBRATION_ACTION_TICKS)
 				{
 					tick_warmup++;
 					tick_calibra = 0;
@@ -1276,11 +1276,8 @@ void Init_Regs (void)
 	}
 	else
 	{
-		///* Original */memcpy(array_level, array_level_fab, size_level);
-		///* Original */memcpy(array_dacdds, array_dacdds_fab, size_dacdds);
-		/* 20180115: changed the size and now sizeof is behaving..., changed from 6*21 to 9*21, and still seeing results from when 6*21 */
-		memcpy(array_level, array_level_fab, 9*21);
-		memcpy(array_dacdds, array_dacdds_fab, 9*21);
+		memcpy(array_level, array_level_fab, size_level);
+		memcpy(array_dacdds, array_dacdds_fab, size_dacdds);
 	}
 	DelayMs(100);
 	INTRestoreInterrupts(int_stats);

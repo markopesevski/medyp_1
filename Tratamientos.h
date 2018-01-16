@@ -29,6 +29,12 @@
 
 #define LEVEL_DRIFT_CORRECTION_MAX 10
 #define DACDDS_DRIFT_CORRECTION_MAX 20
+#define T1_PRESCALER 64
+#define TIMER1_MS ((1000/((SYS_FREQ/T1_PRESCALER)/T1_TICK)))
+#define CALIBRATION_ACTION_MS 50
+#define CALIBRATION_ACTION_TICKS (CALIBRATION_ACTION_MS/TIMER1_MS)
+#define WARMUP_TIME_MS 120*1000
+#define WARMUP_TIME_TICKS (WARMUP_TIME_MS/CALIBRATION_ACTION_MS)
 
 #define VOLTAGE_TO_WAIT_ANRF 20.0f
 #define NUMBER_OF_CORRECT_VALUES_BEFORE_SAVING 5
@@ -55,7 +61,8 @@ typedef enum
 	RF_arrays_3mhz_especific = 5, // 3 MHz especific
 	RF_arrays_ba_facial = 6, // barrido facial
 	RF_arrays_ba_corporal = 7, // barrido corporal
-	RF_arrays_ba_especific = 8 // barrido especific
+	RF_arrays_ba_especific = 8, // barrido especific
+	RF_arrays_max
 } RF_arrays_indexes_t;
 
 

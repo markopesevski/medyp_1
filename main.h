@@ -117,7 +117,8 @@ typedef enum
 	RF_value_90 = 18,
 	RF_value_95 = 19,
 	RF_value_100 = 20,
-	RF_calibrate = 21
+	RF_calibrate = 21,
+	RF_max_values = 21
 } rf_values_t;
 
 typedef enum

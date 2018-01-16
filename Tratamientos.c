@@ -100,6 +100,8 @@ extern float voltage_anrf;
 extern volatile unsigned int tick_warmup;
 unsigned char warmup_started = 0;
 unsigned char last_level_value = LEVEL_MIN + 5;
+extern signed int dacdds_drift_correction;
+extern signed int level_drift_correction;
 
 
 
@@ -661,6 +663,7 @@ void calibration_process(unsigned char input)
 				/* when searching ascending */
 				// index_percentage_value = RF_value_5;
 				/* when searching descending */
+				tick_warmup = 0;
 				index_percentage_value = RF_value_100;
 				calibration_status = CALIBRATION_WAITING_WARMUP;
 			}
@@ -928,7 +931,6 @@ void calibration_process(unsigned char input)
 					array_level[RF_arrays_ba_especific][i] = (array_level[RF_arrays_1mhz_especific][i] + array_level[RF_arrays_3mhz_especific][i])/2;
 				}
 			}
-
 		break;
 		case CALIBRATION_STOP_RF:
 			Apaga_RF();
@@ -966,7 +968,7 @@ void calibration_process(unsigned char input)
 				warmup_started = 1;
 			}
 			/* tick_warmup++ every 250ms, so 2 minutes = 120s -> 120/0.250 = 480 clicks */
-			if(warmup_started == 1 && tick_warmup > 480)
+			if(warmup_started == 1 && tick_warmup > WARMUP_TIME_TICKS)
 			{
 				tick_warmup = 0;
 				calibration_status = CALIBRATION_START_SEARCH;
@@ -974,6 +976,7 @@ void calibration_process(unsigned char input)
 				freq_value = RF_freq_3mhz;
 				handle_value = CORPORAL;
 			}
+			else if(warmup_started == 1 && tick_warmup < WARMUP_TIME_TICKS)
 		break;
 		case CALIBRATION_NO_STATE:
 		default:
