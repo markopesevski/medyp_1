@@ -1539,24 +1539,18 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 			{
 				if (F_RF == 10)
 				{
-					// Carga_TLC5620(REFDACDDS | Ajust_RefDacDDS,3);	// 1 MHz
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_1mhz_corporal][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_1mhz_corporal][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][V_RF];
+					level_value = array_level[RF_arrays_1mhz_corporal][V_RF];
 				}
 				if (F_RF == 30)
 				{
-					// Carga_TLC5620(REFDACDDS | Ajust_RefDacDDS,3);	// 3 MHz
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 3 MHz
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_3mhz_corporal][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_3mhz_corporal][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][V_RF];
+					level_value = array_level[RF_arrays_3mhz_corporal][V_RF];
 				}
 				if (F_RF == 0xBA)
 				{
-					// Carga_TLC5620(REFDACDDS | 119,3);	// Barrido
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// Barrido
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_ba_corporal][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_ba_corporal][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_ba_corporal][V_RF];
+					level_value = array_level[RF_arrays_ba_corporal][V_RF];
 				}
 				// if (V_RF == 0)
 				// {
@@ -1571,25 +1565,18 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 			{
 				if (F_RF == 10)
 				{
-					// Carga_TLC5620(REFDACDDS | 195,3);	// 1 MHz
-					// Carga_TLC5620(REFDACDDS | refdacdds_value,3);	// 1 MHz
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_1mhz_facial][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_1mhz_facial][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_1mhz_facial][V_RF];
+					level_value = array_level[RF_arrays_1mhz_facial][V_RF];
 				}
 				if (F_RF == 30)
 				{
-					// Carga_TLC5620(REFDACDDS | 195,3);	// 3 MHz
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_3mhz_facial][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_3mhz_facial][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_3mhz_facial][V_RF];
+					level_value = array_level[RF_arrays_3mhz_facial][V_RF];
 				}
 				if (F_RF == 0xBA)
 				{
-					// Carga_TLC5620(REFDACDDS | 195,3);	// Barrido
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_ba_facial][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_ba_facial][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_ba_facial][V_RF];
+					level_value = array_level[RF_arrays_ba_facial][V_RF];
 				}
 				// if (V_RF == 0)
 				// {
@@ -1604,23 +1591,24 @@ void Enciende_RF(unsigned char V_RF, unsigned char F_RF)
 			{
 				if (F_RF == 10)
 				{
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_1mhz_especific][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_1mhz_especific][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_1mhz_especific][V_RF];
+					level_value = array_level[RF_arrays_1mhz_especific][V_RF];
 				}
 				if (F_RF == 30)
 				{
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_3mhz_especific][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_3mhz_especific][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_3mhz_especific][V_RF];
+					level_value = array_level[RF_arrays_3mhz_especific][V_RF];
 				}
 				if (F_RF == 0xBA)
 				{
-					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
-					Carga_TLC5620(DACDDS | array_dacdds[RF_arrays_ba_especific][V_RF], 3);
-					Carga_TLC5620(LEVEL | array_level[RF_arrays_ba_especific][V_RF], 1);
+					dacdds_value = array_dacdds[RF_arrays_ba_especific][V_RF];
+					level_value = array_level[RF_arrays_ba_especific][V_RF];
 				}
 			}
+
+			Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);	// 1 MHz
+			Carga_TLC5620(DACDDS | dacdds_value, 3);
+			Carga_TLC5620(LEVEL | level_value, 1);
 
 
 			/*

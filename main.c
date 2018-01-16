@@ -734,24 +734,6 @@ int main(void)
 								level_value = array_level[RF_arrays_3mhz_especific][Valor_RF] + level_drift_correction;
 							}
 						}
-						else if (Frecuencia == 0xBA)
-						{
-							if(Aplicador == FACIAL)
-							{
-								dacdds_value = array_dacdds[RF_arrays_ba_facial][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_ba_facial][Valor_RF] + level_drift_correction;
-							}
-							else if (Aplicador == CORPORAL)
-							{
-								dacdds_value = array_dacdds[RF_arrays_ba_corporal][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_ba_corporal][Valor_RF] + level_drift_correction;
-							}
-							else if (Aplicador == ESPE)
-							{
-								dacdds_value = array_dacdds[RF_arrays_ba_especific][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_ba_especific][Valor_RF] + level_drift_correction;
-							}
-						}
 
 						Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
 						Carga_TLC5620(DACDDS | dacdds_value, 3);
@@ -811,24 +793,6 @@ int main(void)
 							{
 								dacdds_value = array_dacdds[RF_arrays_3mhz_especific][Valor_RF] + dacdds_drift_correction;
 								level_value = array_level[RF_arrays_3mhz_especific][Valor_RF] + level_drift_correction;
-							}
-						}
-						else if (Frecuencia == 0xBA)
-						{
-							if(Aplicador == FACIAL)
-							{
-								dacdds_value = array_dacdds[RF_arrays_ba_facial][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_ba_facial][Valor_RF] + level_drift_correction;
-							}
-							else if (Aplicador == CORPORAL)
-							{
-								dacdds_value = array_dacdds[RF_arrays_ba_corporal][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_ba_corporal][Valor_RF] + level_drift_correction;
-							}
-							else if (Aplicador == ESPE)
-							{
-								dacdds_value = array_dacdds[RF_arrays_ba_especific][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_ba_especific][Valor_RF] + level_drift_correction;
 							}
 						}
 
