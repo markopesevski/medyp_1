@@ -690,7 +690,8 @@ int main(void)
 							if((level_drift_correction >= (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction < LEVEL_DRIFT_CORRECTION_MAX))
 							{
 								level_drift_correction++;
-								dacdds_drift_correction = 0;
+								/* commented to avoid steps when regulating output RF */
+								// dacdds_drift_correction = 0;
 							}
 							else
 							{
@@ -751,7 +752,8 @@ int main(void)
 							if((level_drift_correction > (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction <= LEVEL_DRIFT_CORRECTION_MAX))
 							{
 								level_drift_correction--;
-								dacdds_drift_correction = 0;
+								/* commented to avoid steps when regulating output RF */
+								// dacdds_drift_correction = 0;
 							}
 							else
 							{
