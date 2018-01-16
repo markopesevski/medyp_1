@@ -1820,7 +1820,6 @@ void __ISR(_TIMER_5_VECTOR, ipl5) Timer5Handler(void)		// Cada 25 us para electr
   	EXCEP_C2E				// coprocessor 2
   } _excep_code;
 
-  static unsigned int _epc_code;
   static unsigned int _excep_addr;
 
   // this function overrides the normal _weak_ generic handler
