@@ -977,6 +977,38 @@ void calibration_process(unsigned char input)
 				handle_value = CORPORAL;
 			}
 			else if(warmup_started == 1 && tick_warmup < WARMUP_TIME_TICKS)
+			{
+				/* will check for not surpassing max voltage, to avoid damages */
+				calibration_process(CALIBRATION_RF_READ_VOLTAGE);
+				if(is_voltage_correct(voltage_anrf, index_percentage_value, handle_value, freq_value) == CALIBRATION_VALUE_OVER)
+				{
+					if((dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction < DACDDS_DRIFT_CORRECTION_MAX))
+					{
+						dacdds_drift_correction++;
+						dacdds_value++;
+					}
+					else
+					{
+						dacdds_drift_correction = DACDDS_DRIFT_CORRECTION_MAX;
+						dacdds_value = DACDDS_MIN;
+						if((level_drift_correction >= (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction < LEVEL_DRIFT_CORRECTION_MAX))
+						{
+							level_drift_correction++;
+							level_value++;
+							dacdds_drift_correction = 0;
+						}
+						else
+						{
+							level_drift_correction = LEVEL_DRIFT_CORRECTION_MAX;
+							level_value = LEVEL_MAX;
+						}
+					}
+
+					Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
+					Carga_TLC5620(DACDDS | dacdds_value, 3);
+					Carga_TLC5620(LEVEL | level_value, 1);
+				}
+			}
 		break;
 		case CALIBRATION_NO_STATE:
 		default:
