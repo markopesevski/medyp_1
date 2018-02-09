@@ -18,7 +18,8 @@
  ********************************************************************/
 
 /* will initialize with 255 because it is the most secure, will not auto-destruct */
-#define MARGIN_PERCENTAGE 0.99 /* 1% expressed ready for using with multiplication and division operation */
+///* Original */#define MARGIN_PERCENTAGE 0.99 /* 1% expressed ready for using with multiplication and division operation */
+#define MARGIN_PERCENTAGE 0.98 /* 2% expressed ready for using with multiplication and division operation */
 #define DACDDS_MAX (255-42)
 #define DACDDS_MIN (0+42)
 #define LEVEL_MAX 255
@@ -68,7 +69,6 @@ typedef enum
 	RF_arrays_max
 } RF_arrays_indexes_t;
 
-
 /********************* Declaración de funciones *********************/
 unsigned char Analizar_Trama(void);							// Rutina para analizar trama recibida.
 void Procesar_Ordenes(unsigned char Ordre);					// Rutina para procesar órden de INTAB.
@@ -84,7 +84,7 @@ void Responder(unsigned char Orden_Emb);					// Contesta las tramas de la INTAB.
 void calibration_process(unsigned char input);				// Rutina para procesar órdenes en calibración de RF.
 float read_voltage_anrf_1mhz(unsigned int adc_value);		// Rutina para leer la tensión RMS que hay en ANRF.
 float read_voltage_anrf_3mhz(unsigned int adc_value);		// Rutina para leer la tensión RMS que hay en ANRF.
-unsigned char is_voltage_correct(float voltage, unsigned char index, unsigned char handle, unsigned char frequency);
+unsigned char is_voltage_correct(float voltage, unsigned char index, unsigned char handle, unsigned char frequency, float * voltage_read);
 void voltage_moving_average(float new_input_value, float * moving_average);
 
 /****************************** EOF *********************************/

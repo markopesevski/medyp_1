@@ -150,6 +150,7 @@ signed int level_drift_correction = 0;
 unsigned char drift_dacdds_adjust_over = 0;
 unsigned char drift_level_adjust_over = 0;
 float voltage_anrf = 0.0f;
+float voltage_compared = 0.0f;
 extern rf_frequencies_t freq_value;
 extern unsigned char handle_value;
 extern unsigned char dacdds_value;
@@ -164,6 +165,13 @@ extern unsigned char array_dacdds_fab[RF_arrays_max][RF_max_values];
 extern unsigned char array_level_fab[RF_arrays_max][RF_max_values];
 extern unsigned char last_rf_value;
 static calibration_arrays_saved_t arrays_saved = ARRAYS_NOT_SAVED;
+
+extern const float array_anrf_1mhz_facial[RF_max_values];
+extern const float array_anrf_3mhz_facial[RF_max_values];
+extern const float array_anrf_1mhz_corporal[RF_max_values];
+extern const float array_anrf_3mhz_corporal[RF_max_values];
+extern const float array_anrf_1mhz_especific[RF_max_values];
+extern const float array_anrf_3mhz_especific[RF_max_values];
 
 #ifdef DEBUG_MARKO
 	static float tensio_fora[256] = {0.0f};
@@ -406,6 +414,20 @@ union unio_led Led;
 #endif // DEBUG_MARKO
 
 #ifndef DEBUG_MARKO
+	volatile unsigned char min_level_admitted = 255-80;
+	volatile float max_voltage = 95.0f;
+	void Config_UART3(void);
+	void PutCharacter(unsigned char character);
+	void inform_master(void);
+	volatile unsigned char danger_zone = 0;
+	volatile unsigned int tick_danger_zone = 0;
+	unsigned char safety_dacdds_value = 0;
+	unsigned char safety_level_value = 0;
+	volatile unsigned char max_voltage_in_last_second = 0;
+	volatile float voltage_over_margin_for_security_level = 15.0f;
+	volatile unsigned int max_ticks_in_danger_zone = 40;
+	volatile float max_voltage_in_sweep = 115.0f;
+
 int main(void)
 {
 	Config_System();
@@ -415,6 +437,7 @@ int main(void)
 	Config_Timer1();	// Timer general.
 
 	USBDeviceAttach();
+	Config_UART3();
 
 	while(1)
 	{
@@ -659,11 +682,11 @@ int main(void)
 				Sem_Lect_RF = 0;
 				if(Estoy_Test != CALIBRA_RF)
 				{
-					if(Frecuencia == 10)
+					if(Frecuencia == RF_freq_1mhz)
 					{
 						voltage_moving_average(read_voltage_anrf_1mhz(Lectura_RF()), &voltage_anrf);
 					}
-					else if (Frecuencia == 30)
+					else if (Frecuencia == RF_freq_3mhz || Frecuencia == RF_freq_sweep)
 					{
 						voltage_moving_average(read_voltage_anrf_3mhz(Lectura_RF()), &voltage_anrf);
 					}
@@ -677,130 +700,290 @@ int main(void)
 						drift_level_adjust_over = 0;
 					}
 
-					/* TODO: FOR SAFETY REASONS DO MORE AGGRESSIVE CONTROL IF MUCH OVER DESIRED VALUE. */
-					if((calibration_values_t) is_voltage_correct(voltage_anrf, Valor_RF, Aplicador, Frecuencia) == CALIBRATION_VALUE_OVER)
+					if(Frecuencia == RF_freq_1mhz)
 					{
-						if((dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction < DACDDS_DRIFT_CORRECTION_MAX))
+						if(Aplicador == FACIAL)
 						{
-							dacdds_drift_correction++;
-						}
-						else
-						{
-							dacdds_drift_correction = DACDDS_DRIFT_CORRECTION_MAX;
-							if((level_drift_correction >= (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction < LEVEL_DRIFT_CORRECTION_MAX))
+							max_voltage = array_anrf_1mhz_facial[Valor_RF] + voltage_over_margin_for_security_level; /* adding 15 Vrms as a guard value not to fry any transistorbs */
+							if(Valor_RF/2 == 0)
 							{
-								level_drift_correction++;
-								/* commented to avoid steps when regulating output RF */
-								// dacdds_drift_correction = 0;
+								safety_dacdds_value = array_dacdds[RF_arrays_1mhz_facial][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_1mhz_facial][RF_value_5]; /* choosing half range value */
 							}
 							else
 							{
-								level_drift_correction = LEVEL_DRIFT_CORRECTION_MAX;
+								safety_dacdds_value = array_dacdds[RF_arrays_1mhz_facial][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_1mhz_facial][Valor_RF/2]; /* choosing half range value */
 							}
 						}
-
-						if(Frecuencia == 10)
+						else if (Aplicador == CORPORAL)
 						{
-							if(Aplicador == FACIAL)
+							max_voltage = array_anrf_1mhz_corporal[Valor_RF] + voltage_over_margin_for_security_level; /* adding 15 Vrms as a guard value not to fry any transistorbs */
+							if(Valor_RF/2 == 0)
 							{
-								dacdds_value = array_dacdds[RF_arrays_1mhz_facial][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_1mhz_facial][Valor_RF] + level_drift_correction;
+								safety_dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_1mhz_corporal][RF_value_5]; /* choosing half range value */
 							}
-							else if (Aplicador == CORPORAL)
+							else
 							{
-								dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_1mhz_corporal][Valor_RF] + level_drift_correction;
-							}
-							else if (Aplicador == ESPE)
-							{
-								dacdds_value = array_dacdds[RF_arrays_1mhz_especific][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_1mhz_especific][Valor_RF] + level_drift_correction;
+								safety_dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_1mhz_corporal][Valor_RF/2]; /* choosing half range value */
 							}
 						}
-						else if (Frecuencia == 30)
+						else if (Aplicador == ESPE)
 						{
-							if(Aplicador == FACIAL)
+							max_voltage = array_anrf_1mhz_especific[Valor_RF] + voltage_over_margin_for_security_level; /* adding 15 Vrms as a guard value not to fry any transistorbs */
+							if(Valor_RF/2 == 0)
 							{
-								dacdds_value = array_dacdds[RF_arrays_3mhz_facial][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_3mhz_facial][Valor_RF] + level_drift_correction;
+								safety_dacdds_value = array_dacdds[RF_arrays_1mhz_especific][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_1mhz_especific][RF_value_5]; /* choosing half range value */
 							}
-							else if (Aplicador == CORPORAL)
+							else
 							{
-								dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_3mhz_corporal][Valor_RF] + level_drift_correction;
-							}
-							else if (Aplicador == ESPE)
-							{
-								dacdds_value = array_dacdds[RF_arrays_3mhz_especific][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_3mhz_especific][Valor_RF] + level_drift_correction;
+								safety_dacdds_value = array_dacdds[RF_arrays_1mhz_especific][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_1mhz_especific][Valor_RF/2]; /* choosing half range value */
 							}
 						}
-
-						Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
-						Carga_TLC5620(DACDDS | dacdds_value, 3);
-						Carga_TLC5620(LEVEL | level_value, 1);
 					}
-					else if((calibration_values_t) is_voltage_correct(voltage_anrf, Valor_RF, Aplicador, Frecuencia) == CALIBRATION_VALUE_UNDER)
+					else if(Frecuencia == RF_freq_3mhz)
 					{
-						if((dacdds_drift_correction > (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction <= DACDDS_DRIFT_CORRECTION_MAX))
+						if(Aplicador == FACIAL)
 						{
-							dacdds_drift_correction--;
-						}
-						else
-						{
-							dacdds_drift_correction = -DACDDS_DRIFT_CORRECTION_MAX;
-							if((level_drift_correction > (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction <= LEVEL_DRIFT_CORRECTION_MAX))
+							max_voltage = array_anrf_3mhz_facial[Valor_RF] + voltage_over_margin_for_security_level; /* adding 15 Vrms as a guard value not to fry any transistorbs */
+							if(Valor_RF/2 == 0)
 							{
-								level_drift_correction--;
-								/* commented to avoid steps when regulating output RF */
-								// dacdds_drift_correction = 0;
+								safety_dacdds_value = array_dacdds[RF_arrays_3mhz_facial][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_3mhz_facial][RF_value_5]; /* choosing half range value */
 							}
 							else
 							{
-								level_drift_correction = -LEVEL_DRIFT_CORRECTION_MAX;
+								safety_dacdds_value = array_dacdds[RF_arrays_3mhz_facial][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_3mhz_facial][Valor_RF/2]; /* choosing half range value */
 							}
 						}
-
-						if(Frecuencia == 10)
+						else if (Aplicador == CORPORAL)
 						{
-							if(Aplicador == FACIAL)
+							max_voltage = array_anrf_3mhz_corporal[Valor_RF] + voltage_over_margin_for_security_level; /* adding 15 Vrms as a guard value not to fry any transistorbs */
+							if(Valor_RF/2 == 0)
 							{
-								dacdds_value = array_dacdds[RF_arrays_1mhz_facial][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_1mhz_facial][Valor_RF] + level_drift_correction;
+								safety_dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_3mhz_corporal][RF_value_5]; /* choosing half range value */
 							}
-							else if (Aplicador == CORPORAL)
+							else
 							{
-								dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_1mhz_corporal][Valor_RF] + level_drift_correction;
-							}
-							else if (Aplicador == ESPE)
-							{
-								dacdds_value = array_dacdds[RF_arrays_1mhz_especific][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_1mhz_especific][Valor_RF] + level_drift_correction;
+								safety_dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_3mhz_corporal][Valor_RF/2]; /* choosing half range value */
 							}
 						}
-						else if (Frecuencia == 30)
+						else if (Aplicador == ESPE)
 						{
-							if(Aplicador == FACIAL)
+							max_voltage = array_anrf_3mhz_especific[Valor_RF] + voltage_over_margin_for_security_level; /* adding 15 Vrms as a guard value not to fry any transistorbs */
+							if(Valor_RF/2 == 0)
 							{
-								dacdds_value = array_dacdds[RF_arrays_3mhz_facial][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_3mhz_facial][Valor_RF] + level_drift_correction;
+								safety_dacdds_value = array_dacdds[RF_arrays_3mhz_especific][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_3mhz_especific][RF_value_5]; /* choosing half range value */
 							}
-							else if (Aplicador == CORPORAL)
+							else
 							{
-								dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_3mhz_corporal][Valor_RF] + level_drift_correction;
-							}
-							else if (Aplicador == ESPE)
-							{
-								dacdds_value = array_dacdds[RF_arrays_3mhz_especific][Valor_RF] + dacdds_drift_correction;
-								level_value = array_level[RF_arrays_3mhz_especific][Valor_RF] + level_drift_correction;
+								safety_dacdds_value = array_dacdds[RF_arrays_3mhz_especific][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_3mhz_especific][Valor_RF/2]; /* choosing half range value */
 							}
 						}
+					}
+					else if(Frecuencia == RF_freq_sweep)
+					{
+						max_voltage = max_voltage_in_sweep; /* here, since there are no arrays for Vrms, just choosing an arbitrary max value not to fry any transistorb */
+						if(Aplicador == FACIAL)
+						{
+							if(Valor_RF/2 == 0)
+							{
+								safety_dacdds_value = array_dacdds[RF_arrays_ba_facial][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_ba_facial][RF_value_5]; /* choosing half range value */
+							}
+							else
+							{
+								safety_dacdds_value = array_dacdds[RF_arrays_ba_facial][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_ba_facial][Valor_RF/2]; /* choosing half range value */
+							}
+						}
+						else if(Aplicador == CORPORAL)
+						{
+							if(Valor_RF/2 == 0)
+							{
+								safety_dacdds_value = array_dacdds[RF_arrays_ba_corporal][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_ba_corporal][RF_value_5]; /* choosing half range value */
+							}
+							else
+							{
+								safety_dacdds_value = array_dacdds[RF_arrays_ba_corporal][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_ba_corporal][Valor_RF/2]; /* choosing half range value */
+							}
+						}
+						else if(Aplicador == ESPE)
+						{
+							if(Valor_RF/2 == 0)
+							{
+								safety_dacdds_value = array_dacdds[RF_arrays_ba_especific][RF_value_5]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_ba_especific][RF_value_5]; /* choosing half range value */
+							}
+							else
+							{
+								safety_dacdds_value = array_dacdds[RF_arrays_ba_especific][Valor_RF/2]; /* choosing half range value */
+								safety_level_value = array_level[RF_arrays_ba_especific][Valor_RF/2]; /* choosing half range value */
+							}
+						}
+					}
 
+					if(voltage_anrf > max_voltage && max_voltage_in_last_second <= 2)
+					//if(voltage_anrf > max_voltage)
+					{
+						Reducir = 1;
+						Cont_Reducir = TIEMPO_REDUCIR;
+						danger_zone = 1;
+						dacdds_value = safety_dacdds_value;
+						level_value = safety_level_value;
+						Valor_RF = Valor_RF/2;
+						if(Valor_RF == 0)
+						{
+							Valor_RF = RF_value_5;
+						}
+						dacdds_drift_correction = 0;
+						level_drift_correction = 0;
 						Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
 						Carga_TLC5620(DACDDS | dacdds_value, 3);
 						Carga_TLC5620(LEVEL | level_value, 1);
+						//Suspend_AD9834();				// Pone a 0 el nivel del DDS.
+						inform_master();
+					}
+					else if(danger_zone == 0)
+					{
+						/* TODO: FOR SAFETY REASONS DO MORE AGGRESSIVE CONTROL IF MUCH OVER DESIRED VALUE. */
+						if((calibration_values_t) is_voltage_correct(voltage_anrf, Valor_RF, Aplicador, Frecuencia, &voltage_compared) == CALIBRATION_VALUE_OVER)
+						{
+							if((dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction < DACDDS_DRIFT_CORRECTION_MAX))
+							{
+								dacdds_drift_correction++;
+							}
+							else
+							{
+								dacdds_drift_correction = DACDDS_DRIFT_CORRECTION_MAX;
+								if((level_drift_correction >= (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction < LEVEL_DRIFT_CORRECTION_MAX))
+								{
+									level_drift_correction++;
+									/* commented to avoid steps when regulating output RF */
+									// dacdds_drift_correction = 0;
+								}
+								else
+								{
+									level_drift_correction = LEVEL_DRIFT_CORRECTION_MAX;
+								}
+							}
+
+							if(Frecuencia == 10)
+							{
+								if(Aplicador == FACIAL)
+								{
+									dacdds_value = array_dacdds[RF_arrays_1mhz_facial][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_1mhz_facial][Valor_RF] + level_drift_correction;
+								}
+								else if (Aplicador == CORPORAL)
+								{
+									dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_1mhz_corporal][Valor_RF] + level_drift_correction;
+								}
+								else if (Aplicador == ESPE)
+								{
+									dacdds_value = array_dacdds[RF_arrays_1mhz_especific][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_1mhz_especific][Valor_RF] + level_drift_correction;
+								}
+							}
+							else if (Frecuencia == 30)
+							{
+								if(Aplicador == FACIAL)
+								{
+									dacdds_value = array_dacdds[RF_arrays_3mhz_facial][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_3mhz_facial][Valor_RF] + level_drift_correction;
+								}
+								else if (Aplicador == CORPORAL)
+								{
+									dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_3mhz_corporal][Valor_RF] + level_drift_correction;
+								}
+								else if (Aplicador == ESPE)
+								{
+									dacdds_value = array_dacdds[RF_arrays_3mhz_especific][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_3mhz_especific][Valor_RF] + level_drift_correction;
+								}
+							}
+
+							Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
+							Carga_TLC5620(DACDDS | dacdds_value, 3);
+							Carga_TLC5620(LEVEL | level_value, 1);
+							inform_master();
+						}
+						else if((calibration_values_t) is_voltage_correct(voltage_anrf, Valor_RF, Aplicador, Frecuencia, &voltage_compared) == CALIBRATION_VALUE_UNDER)
+						{
+							if((dacdds_drift_correction > (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction <= DACDDS_DRIFT_CORRECTION_MAX))
+							{
+								dacdds_drift_correction--;
+							}
+							else
+							{
+								dacdds_drift_correction = -DACDDS_DRIFT_CORRECTION_MAX;
+								if((level_drift_correction > (-LEVEL_DRIFT_CORRECTION_MAX)) && (level_drift_correction <= LEVEL_DRIFT_CORRECTION_MAX))
+								{
+									level_drift_correction--;
+									/* commented to avoid steps when regulating output RF */
+									// dacdds_drift_correction = 0;
+								}
+								else
+								{
+									level_drift_correction = -LEVEL_DRIFT_CORRECTION_MAX;
+								}
+							}
+
+							if(Frecuencia == 10)
+							{
+								if(Aplicador == FACIAL)
+								{
+									dacdds_value = array_dacdds[RF_arrays_1mhz_facial][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_1mhz_facial][Valor_RF] + level_drift_correction;
+								}
+								else if (Aplicador == CORPORAL)
+								{
+									dacdds_value = array_dacdds[RF_arrays_1mhz_corporal][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_1mhz_corporal][Valor_RF] + level_drift_correction;
+								}
+								else if (Aplicador == ESPE)
+								{
+									dacdds_value = array_dacdds[RF_arrays_1mhz_especific][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_1mhz_especific][Valor_RF] + level_drift_correction;
+								}
+							}
+							else if (Frecuencia == 30)
+							{
+								if(Aplicador == FACIAL)
+								{
+									dacdds_value = array_dacdds[RF_arrays_3mhz_facial][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_3mhz_facial][Valor_RF] + level_drift_correction;
+								}
+								else if (Aplicador == CORPORAL)
+								{
+									dacdds_value = array_dacdds[RF_arrays_3mhz_corporal][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_3mhz_corporal][Valor_RF] + level_drift_correction;
+								}
+								else if (Aplicador == ESPE)
+								{
+									dacdds_value = array_dacdds[RF_arrays_3mhz_especific][Valor_RF] + dacdds_drift_correction;
+									level_value = array_level[RF_arrays_3mhz_especific][Valor_RF] + level_drift_correction;
+								}
+							}
+
+							Carga_TLC5620(REFDACDDS | REFDACDDS_VALUE, 3);
+							Carga_TLC5620(DACDDS | dacdds_value, 3);
+							Carga_TLC5620(LEVEL | level_value, 1);
+							inform_master();
+						}
 					}
 				}
 			}
@@ -1446,6 +1629,68 @@ void Config_Timer5(void)
 	// Un tick del Timer5 = (1/80M)*16 = 5MHz (0.2us). Su interrupción es cada 125 => 125/5MHz = 25 us
 }
 
+void Config_UART3(void)
+{
+	UARTConfigure(UART3, UART_ENABLE_PINS_TX_RX_ONLY);
+	UARTSetLineControl(UART3, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
+	UARTSetDataRate(UART3, GetPeripheralClock(), 115200);
+	UARTEnable(UART3, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
+	U3STAbits.OERR = 0;		// Limpio flag.
+}
+
+void PutCharacter(unsigned char character)
+{
+	while(!UARTTransmitterIsReady(UART3));
+
+	UARTSendDataByte(UART3, character);
+
+	while(!UARTTransmissionHasCompleted(UART3));
+}
+
+void inform_master(void)
+{
+	unsigned char num = 0;
+	PutCharacter('$');
+	PutCharacter('D');
+	PutCharacter(':');
+	num = (dacdds_value / 100) % 10;
+	PutCharacter(num+0x30);
+	num = (dacdds_value / 10) % 10;
+	PutCharacter(num+0x30);
+	num = (dacdds_value) % 10;
+	PutCharacter(num+0x30);
+	PutCharacter('\t');
+	PutCharacter('L');
+	PutCharacter(':');
+	num = (level_value / 100) % 10;
+	PutCharacter(num+0x30);
+	num = (level_value / 10) % 10;
+	PutCharacter(num+0x30);
+	num = (level_value) % 10;
+	PutCharacter(num+0x30);
+	PutCharacter('\t');
+	PutCharacter('A');
+	PutCharacter(':');
+	num = (((unsigned int)voltage_anrf) / 100) % 10;
+	PutCharacter(num+0x30);
+	num = (((unsigned int)voltage_anrf) / 10) % 10;
+	PutCharacter(num+0x30);
+	num = (((unsigned int)voltage_anrf)) % 10;
+	PutCharacter(num+0x30);
+	PutCharacter('\t');
+	if(voltage_anrf > max_voltage)
+	{
+		PutCharacter('O');
+	}
+	else
+	{
+		PutCharacter('K');
+	}
+
+	PutCharacter('\r');
+	PutCharacter('\n');
+}
+
 /********************************************************************
  * Function:	Timer1Handler()										*
  * Definition:	ISR del Timer1. Cada 5 ms.							*
@@ -1466,7 +1711,22 @@ void __ISR(_TIMER_1_VECTOR, ipl4) Timer1Handler(void)
 	}
 
 	/* WIP */
-	Sem_Lect_RF = 1; /* NEW */
+	if(danger_zone == 1 && tick_danger_zone >= max_ticks_in_danger_zone) /* 100 ms of blockage when RF is in danger zone */
+	{
+		max_voltage_in_last_second++;
+		danger_zone = 0;
+		Sem_Lect_RF = 1;
+		tick_danger_zone = 0;
+	}
+	else if(danger_zone == 1)
+	{
+		Sem_Lect_RF = 0;
+		tick_danger_zone++;
+	}
+	else
+	{
+		Sem_Lect_RF = 1;
+	}
 	/* WIP */
 
 	tick_Led++;
@@ -1479,6 +1739,7 @@ void __ISR(_TIMER_1_VECTOR, ipl4) Timer1Handler(void)
 		// Sem_Lect_RF = 1; /* ORIGINAL */
 		/* WIP */
 		Segundos++;
+		max_voltage_in_last_second = 0;
 	}
 
 	tick_Manac++;

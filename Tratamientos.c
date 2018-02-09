@@ -226,7 +226,8 @@ unsigned char intermig = 0;
 //const char Version_Soft[] = "v1.0.5";
 //const char Version_Soft[] = "v1.0.6";
 //const char Version_Soft[] = "v1.1.0";
-const char Version_Soft[] = "v1.2.0";
+//const char Version_Soft[] = "v1.2.0";
+const char Version_Soft[] = "v1.3.0";
 unsigned char Ajust_RefDacDDS = 114;		// per poder modificarlo desde ajustos amb boto temperatura
 //unsigned char Segunda = 0;
 unsigned char AuxDac_RF = 230;
@@ -808,7 +809,7 @@ void calibration_process(unsigned char input)
 		break;
 		case CALIBRATION_CHECKING_VALUE:
 			calibration_process(CALIBRATION_RF_READ_VOLTAGE);
-			calibration_search_result = (calibration_values_t) is_voltage_correct(voltage_anrf, index_percentage_value, handle_value, freq_value);
+			calibration_search_result = (calibration_values_t) is_voltage_correct(voltage_anrf, index_percentage_value, handle_value, freq_value, NULL);
 			/* when searching ascending */
 			// if((dacdds_value == (DACDDS_MIN + 1)) && (calibration_search_result == CALIBRATION_VALUE_UNDER))
 			/* when searching descending */
@@ -980,7 +981,7 @@ void calibration_process(unsigned char input)
 			{
 				/* will check for not surpassing max voltage, to avoid damages */
 				calibration_process(CALIBRATION_RF_READ_VOLTAGE);
-				if(is_voltage_correct(voltage_anrf, index_percentage_value, handle_value, freq_value) == CALIBRATION_VALUE_OVER)
+				if(is_voltage_correct(voltage_anrf, index_percentage_value, handle_value, freq_value, NULL) == CALIBRATION_VALUE_OVER)
 				{
 					if((dacdds_drift_correction >= (-DACDDS_DRIFT_CORRECTION_MAX)) && (dacdds_drift_correction < DACDDS_DRIFT_CORRECTION_MAX))
 					{
@@ -1052,7 +1053,7 @@ float read_voltage_anrf_3mhz(unsigned int adc_value)
  * Definition:	Rutina para evaluar si una tension esta dentro del	*
  				margen para un indice dado							*
  ********************************************************************/
-unsigned char is_voltage_correct(float voltage, unsigned char index, unsigned char handle, unsigned char frequency)
+unsigned char is_voltage_correct(float voltage, unsigned char index, unsigned char handle, unsigned char frequency, float * voltage_read)
 {
 	float min = 0.0f;
 	float max = 0.0f;
@@ -1098,6 +1099,10 @@ unsigned char is_voltage_correct(float voltage, unsigned char index, unsigned ch
 		}
 	}
 
+	if(voltage_read != NULL)
+	{
+		*voltage_read = max * MARGIN_PERCENTAGE; /* return voltage outside to be able to know when exceeding limits */
+	}
 
 	if(voltage > max)
 	{
