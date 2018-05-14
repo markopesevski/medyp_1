@@ -227,7 +227,7 @@ unsigned char intermig = 0;
 //const char Version_Soft[] = "v1.0.6";
 //const char Version_Soft[] = "v1.1.0";
 //const char Version_Soft[] = "v1.2.0";
-const char Version_Soft[] = "v1.3.0";
+const char Version_Soft[] = "v1.3.1";
 unsigned char Ajust_RefDacDDS = 114;		// per poder modificarlo desde ajustos amb boto temperatura
 //unsigned char Segunda = 0;
 unsigned char AuxDac_RF = 230;
@@ -452,13 +452,15 @@ void Procesar_Ordenes(unsigned char Ordre)
 			Dac_Gal = ReceivedDataBuffer[2];
 			Cont_Test = 0;
 			Estoy_Test = GALVANIC_TEST;
-			Enciende_Galva(10);
+			/* commented just to avoid problems with Rös's, because they are setting settings here and then trying it on the main screen */
+			// Enciende_Galva(10);
 		break;
 		case SET_STIM:		//36
 			Dac_Stim = ReceivedDataBuffer[2];
 			Cont_Test = 0;
 			Estoy_Test = STIMULATION_TEST;
-			Enciende_Stim(10);
+			/* commented just to avoid problems with Rös's, because they are setting settings here and then trying it on the main screen */
+			// Enciende_Stim(10);
 		break;
 		case SET_RF:		//41
 			Dac_RF = ReceivedDataBuffer[2];

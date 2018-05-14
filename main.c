@@ -631,20 +631,20 @@ int main(void)
 						/**/
 					}
 					else if (Media_Galva <= 20)
+					{
+						Cont_Reducir++;
+						if (Cont_Reducir >= TIEMPO_REDUCIR)
 						{
-							Cont_Reducir++;
-							if (Cont_Reducir >= TIEMPO_REDUCIR)
-							{
-								Reducir = 1; 		// No tengo continuidad.
-								Cont_Reducir = TIEMPO_REDUCIR;
-								//#ifdef DEBUGAR
-								//Pitar = 1;//todo nova
-								/**/
-								LED_RUN = 1;
-								/**/
-								//#endif
-							}
+							Reducir = 1; 		// No tengo continuidad.
+							Cont_Reducir = TIEMPO_REDUCIR;
+							//#ifdef DEBUGAR
+							//Pitar = 1;//todo nova
+							/**/
+							LED_RUN = 1;
+							/**/
+							//#endif
 						}
+					}
 				}
 			}
 			Control_Temperatura();
@@ -1649,6 +1649,7 @@ void PutCharacter(unsigned char character)
 
 void inform_master(void)
 {
+	#if 0
 	unsigned char num = 0;
 	PutCharacter('$');
 	PutCharacter('D');
@@ -1689,6 +1690,7 @@ void inform_master(void)
 
 	PutCharacter('\r');
 	PutCharacter('\n');
+	#endif
 }
 
 /********************************************************************
